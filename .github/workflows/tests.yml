@@ -25,7 +25,7 @@ jobs:
 
   pytest:
     name: pytest
-    needs: [check-format, lint]
+    needs: [lint]
     runs-on: ubuntu-latest
 
     steps:
