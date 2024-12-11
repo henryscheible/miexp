@@ -18,9 +18,10 @@ def transformer():
 def test_transformer_inits(transformer):
     assert isinstance(transformer, Transformer)
 
+
 def test_forward_runs(transformer: Transformer):
     example_input = transformer.get_sample_input(
-        batch_size=2, 
+        batch_size=2,
     )
     output = transformer.forward(example_input)
     assert isinstance(output, torch.Tensor)
