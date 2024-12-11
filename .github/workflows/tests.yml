@@ -8,7 +8,6 @@ on: [push]
 
 jobs:
   check-format:
-    name: python
     runs-on: ubuntu-latest
 
     steps:
@@ -21,7 +20,6 @@ jobs:
         run: uvx ruff format --diff
 
   lint:
-    name: python
     runs-on: ubuntu-latest
 
     steps:
@@ -34,7 +32,6 @@ jobs:
         run: uvx ruff check
 
   pytest:
-    name: python
     needs: [check-format, lint]
     runs-on: ubuntu-latest
 
