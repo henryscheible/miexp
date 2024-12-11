@@ -1,5 +1,7 @@
 name: Tests
 
+on: [push]
+
 jobs:
   uv-example:
     name: python
