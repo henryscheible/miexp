@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "numpy>=2.2.0",
+    "pydantic>=2.10.3",
     "torch>=2.5.1",
 ]
 
@@ -21,3 +22,21 @@ build-backend = "hatchling.build"
 
 [tool.ruff]
 include = ["pyproject.toml", "src/**/*.py", "tests/**/*.py", "scripts/**/*.py"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "D", "UP", "PD", "I", "N", "ANN"]
+ignore = [
+    "D100", "D104"
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.extend-per-file-ignores]
+"experiments/**/*.py" = ["D"]
+
+[tool.ruff.lint.flake8-annotations]
+mypy-init-return = true
+
+[tool.pyright]
+typeCheckingMode = "standard"
