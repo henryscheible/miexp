@@ -33,6 +33,7 @@ ignore = [
 convention = "google"
 
 [tool.ruff.lint.extend-per-file-ignores]
+"tests/**/*.py" = ["ANN", "N806", "D"]
 "experiments/**/*.py" = ["D"]
 
 [tool.ruff.lint.flake8-annotations]
