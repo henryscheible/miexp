@@ -20,6 +20,8 @@ class BooleanTransformer(nn.Module):
         Args:
             max_seq_len (int): maximum length of boolean input to transformer.
             hidden_dim (int): hidden dimension of transformer.
+            n_heads (int): number of attention heads.
+            num_classifier_hidden_layers (int): Number of hidden layers in the classification MLP
         """
         super().__init__()  # pyright: ignore[reportUnknownMemberType]
         self.max_seq_len = max_seq_len
