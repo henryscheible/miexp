@@ -101,7 +101,6 @@ class BooleanTransformer(nn.Module):
             ],
             dim=1,
         )
-        print(int_input.tolist())
         embedding = self.embedding(int_input)
         # pos_embedding = self.pos_embedding(int_input)
         output_sequence = self.transformer_layer(embedding)
