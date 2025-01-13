@@ -2,7 +2,7 @@ from typing import Self
 
 import pydantic
 import torch
-from torch import BoolTensor, FloatTensor, nn
+from torch import FloatTensor, Tensor, nn
 
 
 class BooleanTransformer(nn.Module):
@@ -26,6 +26,8 @@ class BooleanTransformer(nn.Module):
         super().__init__()  # pyright: ignore[reportUnknownMemberType]
         self.max_seq_len = max_seq_len
         self.hidden_dim = hidden_dim
+        self.num_classifier_hidden_layers = num_classifier_hidden_layers
+        self.n_heads = n_heads
         self.embedding = nn.Embedding(3, hidden_dim)  # Account for CLS token (2)
         self.pos_embedding = nn.Embedding(max_seq_len, hidden_dim)
         self.transformer_layer = nn.TransformerEncoderLayer(
@@ -47,6 +49,8 @@ class BooleanTransformer(nn.Module):
         hyperparameters = {
             "max_seq_len": self.max_seq_len,
             "hidden_dim": self.hidden_dim,
+            "num_classifier_hidden_layers": self.num_classifier_hidden_layers,
+            "n_heads": self.n_heads,
         }
         state_dict = self.state_dict()
         torch.save(
@@ -69,7 +73,7 @@ class BooleanTransformer(nn.Module):
         """
         checkpoint = torch.load(
             checkpoint_path,
-            map_device=map_device,
+            map_location=map_device,
         )
         model = cls(**checkpoint["hyperparameters"])
         model.load_state_dict(checkpoint["state_dict"])
@@ -78,7 +82,7 @@ class BooleanTransformer(nn.Module):
         return model
 
     @pydantic.validate_call(config=pydantic.ConfigDict(arbitrary_types_allowed=True))
-    def forward(self, input: BoolTensor) -> FloatTensor:
+    def forward(self, input: Tensor) -> FloatTensor:
         """Forward method of Boolean Transformer.
 
         Args:
@@ -87,11 +91,19 @@ class BooleanTransformer(nn.Module):
         Returns:
             FloatTensor: (B, 2) shaped tensor containing logit that output is 0 or 1
         """
-        assert len(input.shape) == 3, "Input must be a 3D Tensor"
+        assert len(input.shape) == 2, "Input must be a 3D Tensor"
         B, N = input.shape  # noqa: N806
-        int_input = torch.cat([torch.zeros((B,)), input.type(torch.int)])
+
+        int_input = torch.cat(
+            [
+                2 * torch.ones((B, 1), dtype=torch.int).to(input.device),
+                input.type(torch.int),
+            ],
+            dim=1,
+        )
+        print(int_input.tolist())
         embedding = self.embedding(int_input)
-        pos_embedding = self.pos_embedding(int_input)
-        output_sequence = self.transformer_layer(embedding + pos_embedding)
+        # pos_embedding = self.pos_embedding(int_input)
+        output_sequence = self.transformer_layer(embedding)
         output_logits = self.classifier(output_sequence[:, 0, :])
         return output_logits
