@@ -1,0 +1,2 @@
+train_model:
+	uv run python train_transformer.py --device mps --lr 0.001 --n_heads 1 --dataset_size 10 --func_width 4 --checkpoint_save_path model.ckpt --logs_save_path logs.csv --num_classifier_hidden_layers 1

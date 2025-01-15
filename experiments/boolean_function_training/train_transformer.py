@@ -1,3 +1,4 @@
+import pandas as pd
 import torch
 from pydantic import BaseModel
 from torch import nn
@@ -6,7 +7,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from miexp.bfuncs import MajDataset
-from miexp.models.btransformer import BooleanTransformer
+from miexp.models.btransformer import BooleanTransformerNoEmbedding
 from miexp.script_util import parse_args_from_conf
 
 
@@ -16,10 +17,9 @@ class Configuration(BaseModel):
     n_heads: int
     dataset_size: int
     func_width: int
-    max_seq_len: int
-    hidden_dim: int
-    visualization_save_path: str
-    csv_save_path: 
+    checkpoint_save_path: str
+    logs_save_path: str
+    num_classifier_hidden_layers: int
 
 
 def train_epoch(
@@ -79,11 +79,10 @@ def eval_epoch(
 def main(args: Configuration) -> None:
     dataset = MajDataset(args.func_width, num_samples=args.dataset_size)
 
-    model = BooleanTransformer(
-        max_seq_len=args.max_seq_len,
-        hidden_dim=args.hidden_dim,
+    model = BooleanTransformerNoEmbedding(
+        max_seq_len=args.func_width,
         n_heads=args.n_heads,
-        num_classifier_hidden_layers=3,
+        num_classifier_hidden_layers=args.num_classifier_hidden_layers,
     )
 
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
@@ -97,6 +96,9 @@ def main(args: Configuration) -> None:
                 model, optimizer, dataloader, torch.device(args.device), criterion
             )
         )
+
+    model.save_to_checkpoint(args.checkpoint_save_path)
+    pd.DataFrame.from_records(results).to_csv(args.logs_save_path)
 
 
 if __name__ == "__main__":
