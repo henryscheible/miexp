@@ -1,6 +1,6 @@
 .PHONY: check lint lint-checkonly type-check
 
-check: lint type-check
+check: lint type-check test
 
 lint: 
 	uvx ruff check --fix
@@ -12,3 +12,6 @@ lint-checkonly:
 
 type-check:
 	uv run pyright
+
+test:
+	uv run pytest
