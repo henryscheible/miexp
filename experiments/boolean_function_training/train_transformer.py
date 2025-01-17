@@ -19,7 +19,7 @@ class Configuration(BaseModel):
     max_seq_len: int
     hidden_dim: int
     visualization_save_path: str
-    csv_save_path: 
+    csv_save_path: str
 
 
 def train_epoch(
