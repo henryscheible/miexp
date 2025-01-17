@@ -8,18 +8,20 @@ from torch import nn
 class AttentionHead(nn.Module):
     """AttentionHead is a neural network module that performs self-attention."""
 
-    def __init__(self, hidden_dim: int) -> None:
+    def __init__(self, head_dim: int, hidden_dim: int) -> None:
         """Initializes the AttentionHead.
 
         Args:
+            head_dim (int): The dimensionality of the attention head.
             hidden_dim (int): The dimensionality of the hidden layers.
         """
         super().__init__()
         self.hidden_dim = hidden_dim
-        self.w_q = nn.Linear(hidden_dim, hidden_dim)
-        self.w_k = nn.Linear(hidden_dim, hidden_dim)
-        self.w_v = nn.Linear(hidden_dim, hidden_dim)
-        self.w_o = nn.Linear(hidden_dim, hidden_dim)
+        self.head_dim = head_dim
+        self.w_q = nn.Linear(hidden_dim, head_dim)
+        self.w_k = nn.Linear(hidden_dim, head_dim)
+        self.w_v = nn.Linear(hidden_dim, head_dim)
+        self.w_o = nn.Linear(head_dim, hidden_dim)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Perform the forward pass of the transformer model.
@@ -33,19 +35,20 @@ class AttentionHead(nn.Module):
         q = self.w_q(x)
         k = self.w_k(x)
         v = self.w_v(x)
-        A = torch.softmax(q @ k.T / (self.hidden_dim**0.5), dim=-1)  # noqa: N806
-        y = self.w_o(A @ x @ v.T)
+        A = torch.softmax(q @ k.transpose(-1, -2) / (self.head_dim**0.5), dim=-1)  # noqa: N806
+        y = self.w_o(A @ v)
         return y
 
 
 class AttentionLayer(nn.Module):
     """AttentionLayer is a neural network module that applies multiple attention heads followed by a multi-layer perceptron (MLP)."""
 
-    def __init__(self, n_heads: int, hidden_dim: int) -> None:
+    def __init__(self, n_heads: int, head_dim: int, hidden_dim: int) -> None:
         """Initializes the AttentionLayer.
 
         Args:
             n_heads (int): The number of attention heads.
+            head_dim (int): The dimensionality of each attention head.
             hidden_dim (int): The dimensionality of the hidden layers.
 
         Attributes:
@@ -54,7 +57,12 @@ class AttentionLayer(nn.Module):
         """
         super().__init__()
         self.attention_heads = nn.ModuleList(
-            [AttentionHead(hidden_dim) for _ in range(n_heads)]
+            [AttentionHead(head_dim, hidden_dim) for _ in range(n_heads)]
+        )
+        self.mlp = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
