@@ -40,6 +40,43 @@ class AttentionHead(nn.Module):
         return y
 
 
+class SingleHeadTransformer(nn.Module):
+    """SingleHeadTransformer is a neural network module that applies an embedding, then a single attention head followed by a multi-layer perceptron (MLP), followed by an unembedding."""
+
+    def __init__(self, vocab_size: int, head_dim: int, hidden_dim: int) -> None:
+        """Initializes the SingleHeadTransformer.
+
+        Args:
+            vocab_size (int): The size of the vocabulary.
+            head_dim (int): The dimensionality of the attention head.
+            hidden_dim (int): The dimensionality of the hidden layer.
+        """
+        super().__init__()
+        self.embedding = nn.Embedding(vocab_size, hidden_dim)
+        self.attention_head = AttentionHead(head_dim, hidden_dim)
+        self.mlp = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+        )
+        self.unembedding = nn.Linear(hidden_dim, vocab_size)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Perform the forward pass of the transformer model.
+
+        Args:
+            x (torch.Tensor): Input tensor of shape (batch_size, seq_length, input_dim).
+
+        Returns:
+            torch.Tensor: Output tensor of shape (batch_size, seq_length, input_dim).
+        """
+        y = self.embedding(x)
+        y = self.attention_head(y)
+        y = self.mlp(y)
+        y = self.unembedding(y)
+        return y
+
+
 class AttentionLayer(nn.Module):
     """AttentionLayer is a neural network module that applies multiple attention heads followed by a multi-layer perceptron (MLP)."""
 
