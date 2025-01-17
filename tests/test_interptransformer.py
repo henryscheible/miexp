@@ -108,7 +108,7 @@ def test_single_head_transformer_initialization():
 
     # Check if the embedding layer is initialized correctly
     assert isinstance(transformer.embedding, torch.nn.Embedding)
-    assert transformer.embedding.num_embeddings == vocab_size
+    assert transformer.embedding.num_embeddings == vocab_size + 1
     assert transformer.embedding.embedding_dim == hidden_dim
 
     # Check if the attention head is an instance of AttentionHead
@@ -130,7 +130,7 @@ def test_single_head_transformer_initialization():
     # Check if the unembedding layer is initialized correctly
     assert isinstance(transformer.unembedding, torch.nn.Linear)
     assert transformer.unembedding.in_features == hidden_dim
-    assert transformer.unembedding.out_features == vocab_size
+    assert transformer.unembedding.out_features == vocab_size + 1
 
 
 def test_single_head_transformer_forward():
@@ -148,7 +148,7 @@ def test_single_head_transformer_forward():
     y = transformer(x)
 
     # Check if the output tensor has the correct shape
-    assert y.shape == (batch_size, seq_length, vocab_size)
+    assert y.shape == (batch_size, vocab_size + 1)
 
     # Check if the output tensor is a torch.Tensor
     assert isinstance(y, torch.Tensor)

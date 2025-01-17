@@ -52,14 +52,14 @@ class SingleHeadTransformer(nn.Module):
             hidden_dim (int): The dimensionality of the hidden layer.
         """
         super().__init__()
-        self.embedding = nn.Embedding(vocab_size, hidden_dim)
+        self.embedding = nn.Embedding(vocab_size + 1, hidden_dim)
         self.attention_head = AttentionHead(head_dim, hidden_dim)
         self.mlp = nn.Sequential(
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, hidden_dim),
         )
-        self.unembedding = nn.Linear(hidden_dim, vocab_size)
+        self.unembedding = nn.Linear(hidden_dim, vocab_size + 1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Perform the forward pass of the transformer model.
@@ -70,10 +70,13 @@ class SingleHeadTransformer(nn.Module):
         Returns:
             torch.Tensor: Output tensor of shape (batch_size, seq_length, input_dim).
         """
+        x = torch.cat(
+            [torch.ones(x.shape[0], 1, dtype=torch.long, device=x.device), x], dim=1
+        )
         y = self.embedding(x)
         y = self.attention_head(y)
         y = self.mlp(y)
-        y = self.unembedding(y)
+        y = self.unembedding(y[:, 0, :])
         return y
 
 
