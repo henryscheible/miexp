@@ -7,7 +7,9 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from miexp.bfuncs import MajDataset
-from miexp.models.interptransformer import SingleHeadTransformer
+from miexp.models.interptransformer import (
+    SingleHeadTransformerNoEmbedding,
+)
 from miexp.script_util import parse_args_from_conf
 
 
@@ -91,10 +93,9 @@ def main(args: Configuration) -> None:
     )
     print(f"train: {len(train_data)}, eval: {len(eval_data)}")
 
-    model = SingleHeadTransformer(
+    model = SingleHeadTransformerNoEmbedding(
         vocab_size=2,
         head_dim=args.head_dim,
-        hidden_dim=args.hidden_dim,
     ).to(torch.device(args.device))
 
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)

@@ -4,6 +4,7 @@ from miexp.models.interptransformer import (
     AttentionHead,
     AttentionLayer,
     SingleHeadTransformer,
+    SingleHeadTransformerNoEmbedding,
 )
 
 
@@ -138,6 +139,64 @@ def test_single_head_transformer_forward():
     head_dim = 16
     hidden_dim = 64
     transformer = SingleHeadTransformer(vocab_size, head_dim, hidden_dim)
+
+    # Create a random input tensor with the appropriate shape
+    batch_size = 8
+    seq_length = 10
+    x = torch.randint(0, vocab_size, (batch_size, seq_length))
+
+    # Perform a forward pass
+    y = transformer(x)
+
+    # Check if the output tensor has the correct shape
+    assert y.shape == (batch_size, vocab_size + 1)
+
+    # Check if the output tensor is a torch.Tensor
+    assert isinstance(y, torch.Tensor)
+
+
+def test_single_head_transformer_no_embedding_initialization():
+    vocab_size = 100
+    head_dim = 16
+    transformer = SingleHeadTransformerNoEmbedding(vocab_size, head_dim)
+
+    hidden_dim = vocab_size + 1
+
+    # Check if the embedding layer is initialized correctly
+    assert isinstance(transformer.embedding, torch.nn.Embedding)
+    assert transformer.embedding.num_embeddings == hidden_dim
+    assert transformer.embedding.embedding_dim == hidden_dim
+    assert torch.equal(transformer.embedding.weight, torch.eye(hidden_dim))
+    assert not transformer.embedding.weight.requires_grad
+
+    # Check if the attention head is an instance of AttentionHead
+    assert isinstance(transformer.attention_head, AttentionHead)
+    assert transformer.attention_head.head_dim == head_dim
+    assert transformer.attention_head.hidden_dim == hidden_dim
+
+    # Check if the MLP is a sequential model with the correct layers
+    assert isinstance(transformer.mlp, torch.nn.Sequential)
+    assert len(transformer.mlp) == 3
+    assert isinstance(transformer.mlp[0], torch.nn.Linear)
+    assert transformer.mlp[0].in_features == hidden_dim
+    assert transformer.mlp[0].out_features == hidden_dim
+    assert isinstance(transformer.mlp[1], torch.nn.ReLU)
+    assert isinstance(transformer.mlp[2], torch.nn.Linear)
+    assert transformer.mlp[2].in_features == hidden_dim
+    assert transformer.mlp[2].out_features == hidden_dim
+
+    # Check if the unembedding layer is initialized correctly
+    assert isinstance(transformer.unembedding, torch.nn.Linear)
+    assert transformer.unembedding.in_features == hidden_dim
+    assert transformer.unembedding.out_features == hidden_dim
+    assert torch.equal(transformer.unembedding.weight, torch.eye(hidden_dim))
+    assert not transformer.unembedding.weight.requires_grad
+
+
+def test_single_head_transformer_no_embedding_forward():
+    vocab_size = 100
+    head_dim = 16
+    transformer = SingleHeadTransformerNoEmbedding(vocab_size, head_dim)
 
     # Create a random input tensor with the appropriate shape
     batch_size = 8
