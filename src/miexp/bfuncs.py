@@ -21,4 +21,12 @@ class MajDataset(Dataset):
         return self.num_samples
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:  # noqa: D105
+        """Retrieve the data and label at the specified index.
+
+        Args:
+            idx (int): The index of the item to retrieve.
+
+        Returns:
+            tuple[torch.Tensor, torch.Tensor]: A tuple containing the data and label tensors at the specified index.
+        """
         return (self.data[idx], self.labels[idx])
