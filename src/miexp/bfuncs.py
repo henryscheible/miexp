@@ -14,7 +14,7 @@ class MajDataset(Dataset):
         """
         self.N = N
         self.num_samples = num_samples
-        self.data = torch.randint(0, 2, (self.num_samples, self.N)).type(torch.float)
+        self.data = torch.randint(0, 2, (self.num_samples, self.N))
         self.labels = (torch.sum(self.data, dim=1) > (self.N // 2)).type(torch.int)
 
     def __len__(self) -> int:  # noqa: D105
