@@ -102,7 +102,7 @@ class SingleHeadTransformerNoEmbedding(nn.Module):
             nn.ReLU(),
             nn.Linear(hidden_dim, hidden_dim),
         )
-        self.unembedding = nn.Linear(hidden_dim, vocab_size + 1)
+        self.unembedding = nn.Linear(hidden_dim, vocab_size + 1, bias=False)
         self.unembedding.weight = nn.Parameter(torch.eye(vocab_size + 1))
         self.unembedding.weight.requires_grad = False
 
