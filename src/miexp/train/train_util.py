@@ -33,7 +33,7 @@ def train_epoch(
         input = input.to(device)
         labels = labels.to(device)
         output = model(input)
-        loss = criterion(output, labels)
+        loss = criterion(output, labels.type(torch.long))
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()

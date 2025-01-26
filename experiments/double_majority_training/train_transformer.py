@@ -1,16 +1,15 @@
 import pandas as pd
 import torch
 from pydantic import BaseModel
-from torch import nn
-from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from miexp.bfuncs import MajDataset
+from miexp.bfuncs import DoubleMajDataset
 from miexp.models.interptransformer import (
     SingleHeadTransformerNoEmbeddingNoMLP,
 )
 from miexp.script_util import parse_args_from_conf
+from miexp.train.train_util import eval_epoch, train_epoch
 
 
 class Configuration(BaseModel):
@@ -25,65 +24,18 @@ class Configuration(BaseModel):
     model_save_path: str
     train_frac: float
     dataset_save_path: str
-
-
-def train_epoch(
-    model: nn.Module,
-    optimizer: Optimizer,
-    dataloader: DataLoader,
-    device: torch.device,
-    criterion: nn.Module,
-) -> dict[str, float | None]:
-    model = model.to(device)
-    total_train_loss = 0
-    total_train_acc = 0
-    total_items = 0
-    for input, labels in dataloader:
-        input = input.to(device)
-        labels = labels.to(device)
-        output = model(input)
-        loss = criterion(output, labels)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        total_train_loss += (loss.item()) * len(input)
-        total_train_acc += torch.sum(torch.argmax(output, dim=1) == labels).item()
-        total_items += len(input)
-    return {
-        "acc": total_train_acc / total_items,
-        "loss": total_train_loss / total_items,
-        **{
-            f"norm/{name}": torch.norm(param.grad).item()
-            for name, param in model.named_parameters()
-            if param.grad is not None
-        },
-    }
-
-
-def eval_epoch(
-    model: nn.Module, dataloader: DataLoader, device: torch.device
-) -> dict[str, list[float]]:
-    model = model.to(device)
-    inputs = []
-    correct_outputs = []
-    probabilities = []
-    for input, labels in dataloader:
-        input = input.to(device)
-        labels = labels.to(device)
-        output = model(input)
-        inputs += input.tolist()
-        correct_outputs += labels.tolist()
-        probabilities += torch.softmax(output, dim=1).tolist()
-    return {
-        "inputs": inputs,
-        "correct_outputs": correct_outputs,
-        "probabilities": probabilities,
-    }
+    low_threshold: float
+    high_threshold: float
 
 
 def main(args: Configuration) -> None:
     torch.manual_seed(42)
-    dataset = MajDataset(args.func_width, num_samples=args.dataset_size)
+    dataset = DoubleMajDataset(
+        args.func_width,
+        low=args.low_threshold,
+        high=args.high_threshold,
+        num_samples=args.dataset_size,
+    )
 
     train_data, eval_data = torch.utils.data.random_split(
         dataset,
