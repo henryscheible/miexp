@@ -3,6 +3,7 @@ import json
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import plotly.io as pio
 import torch
 from plotly.subplots import make_subplots
 from torch.utils.data import DataLoader
@@ -12,18 +13,18 @@ from miexp.models.interptransformer import (
     SingleHeadTransformerNoEmbedding,
 )
 
+pio.kaleido.scope.mathjax = None
+
 device = torch.device("mps" if torch.cuda.is_available() else "cpu")
 
 results = pd.read_csv("./results.csv")
 
 train_results_fig = px.line(results, y=["loss", "acc", "eval_acc"])
-train_results_fig.write_html(
-    "train_results_fig.html", full_html=False, include_plotlyjs="cdn"
-)
+train_results_fig.write_image("train_results_fig.svg")
 
-state_dict = torch.load("./model.pth", map_location=device)
+state_dict = torch.load("./model.pth", map_location=device, weights_only=False)
 
-dataset = torch.load("./dataset.pt", map_location=device)
+dataset = torch.load("./dataset.pt", map_location=device, weights_only=False)
 
 model = SingleHeadTransformerNoEmbedding(vocab_size=2, head_dim=1)
 model.load_state_dict(state_dict)
@@ -65,7 +66,7 @@ for i, (name, matrix) in enumerate(filtered_state_dict.items()):
         col=(i % 3) + 1,
     )
 
-fig.write_image("parameter_view_fig.pdf")
+fig.write_image("parameter_view_fig.svg", width=1000)
 
 with open("numbers.json", "w") as f:
     contributions = (
