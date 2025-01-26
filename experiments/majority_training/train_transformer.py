@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 from miexp.bfuncs import MajDataset
 from miexp.models.interptransformer import (
-    SingleHeadTransformerNoEmbedding,
+    SingleHeadTransformerNoEmbeddingNoMLP,
 )
 from miexp.script_util import parse_args_from_conf
 
@@ -18,7 +18,6 @@ class Configuration(BaseModel):
     lr: float
     dataset_size: int
     func_width: int
-    hidden_dim: int
     head_dim: int
     visualization_save_path: str
     csv_save_path: str
@@ -93,7 +92,7 @@ def main(args: Configuration) -> None:
     )
     print(f"train: {len(train_data)}, eval: {len(eval_data)}")
 
-    model = SingleHeadTransformerNoEmbedding(
+    model = SingleHeadTransformerNoEmbeddingNoMLP(
         vocab_size=2,
         head_dim=args.head_dim,
     ).to(torch.device(args.device))
