@@ -73,8 +73,7 @@ class RandMajDataset(Dataset):
         Args:
             N (int): Size of the input boolean string
             num_samples (int, optional): Size of the dataset. Defaults to 10000.
-            low (float): Lower threshold for the function
-            high (float): Upper threshold for the function
+            frac (float): Fraction of the input to consider
         """
         self.N = N
         self.num_samples = num_samples
