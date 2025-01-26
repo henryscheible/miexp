@@ -7,5 +7,5 @@ visualize:
 	uv run python create_visualizations.py 
 
 train_dry_run: 
-	uv run python train_transformer.py --device cpu --lr 0.01 --dataset_size 20 --func_width 3 --head_dim 1 --num_epochs 1 --train_frac 0.4
+	uv run python train_transformer.py --device cpu --lr 0.01 --dataset_size 20 --func_width 3 --head_dim 1 --num_epochs 1 --train_frac 0.4 --low_threshold 0.5 --high_threshold 0.9
 
