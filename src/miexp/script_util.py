@@ -25,4 +25,4 @@ def parse_args_from_conf[CONF_CLASS: BaseModel](
             help=description,
         )
     args = parser.parse_args()
-    return configuration_class(**args.vars())
+    return configuration_class(**vars(args))
