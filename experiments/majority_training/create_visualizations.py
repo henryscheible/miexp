@@ -7,11 +7,11 @@ import plotly.io as pio
 import torch
 from plotly.subplots import make_subplots
 from torch.utils.data import DataLoader
-from train_transformer import eval_epoch
 
 from miexp.models.interptransformer import (
     SingleHeadTransformerNoEmbedding,
 )
+from miexp.train.train_util import eval_epoch
 
 pio.kaleido.scope.mathjax = None
 
