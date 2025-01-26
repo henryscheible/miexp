@@ -21,8 +21,9 @@ def parse_args_from_conf[CONF_CLASS: BaseModel](
             description = None
         parser.add_argument(
             f"--{field_name}",
-            type=field_info.annotation if field_info.annotation is not None else str,
+            type=field_info.annotation if callable(field_info.annotation) else str,
             help=description,
+            default=field_info.default,
         )
     args = parser.parse_args()
     return configuration_class(**vars(args))
