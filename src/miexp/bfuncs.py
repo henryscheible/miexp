@@ -78,11 +78,11 @@ class RandMajDataset(Dataset):
         self.N = N
         self.num_samples = num_samples
         self.frac = frac
-        self.data = torch.randint(0, 2, (self.num_samples, self.N)).type(torch.float)
+        self.data = torch.randint(0, 2, (self.num_samples, self.N))
         self.choice = torch.randperm(N)[: int(frac * N)]
         self.labels = (
             torch.sum(self.data[:, self.choice], dim=1) >= int(self.N * frac * 0.5)
-        ).type(torch.int)
+        ).type(torch.long)
 
     def __len__(self) -> int:  # noqa: D105
         return self.num_samples
