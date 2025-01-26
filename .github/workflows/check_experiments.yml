@@ -1,9 +1,9 @@
-name: Tests
+name: Check Experiments
 
 on: [push]
 
 jobs:
-  lint-and-test:
+  check-experiment:
     runs-on: ubuntu-latest
 
     steps:
@@ -14,12 +14,6 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Lint
-        run: uvx ruff check
-
-      - name: Check Format
-        run: uvx ruff format --check
-
       - name: "Set up Python"
         uses: actions/setup-python@v5
         with:
@@ -28,8 +22,5 @@ jobs:
       - name: Install the project
         run: uv sync --all-extras --dev
 
-      - name: Run Static Type Checking
-        run: uv run pyright
-
-      - name: Run tests
-        run: uv run pytest tests
+      - name: Check Majority Training
+        run: cd experiments/majority_training && make train_dry_run
