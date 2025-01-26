@@ -19,12 +19,11 @@ class Configuration(BaseModel):
     dataset_size: int
     func_width: int
     head_dim: int
-    visualization_save_path: str
-    csv_save_path: str
+    csv_save_path: str | None = None
     num_epochs: int
-    model_save_path: str
+    model_save_path: str | None = None
     train_frac: float
-    dataset_save_path: str
+    dataset_save_path: str | None = None
 
 
 def train_epoch(
@@ -42,7 +41,7 @@ def train_epoch(
         input = input.to(device)
         labels = labels.to(device)
         output = model(input)
-        loss = criterion(output, labels)
+        loss = criterion(output, labels.type(torch.long))
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -115,9 +114,11 @@ def main(args: Configuration) -> None:
         cur_results["eval_acc"] = eval_acc.float().mean().item()
         results.append(cur_results)
 
-    torch.save({"train": train_data, "eval": eval_data}, args.dataset_save_path)
+    if args.dataset_save_path is not None:
+        torch.save({"train": train_data, "eval": eval_data}, args.dataset_save_path)
     pd.DataFrame.from_records(results).to_csv(args.csv_save_path)
-    torch.save(model.state_dict(), args.model_save_path)
+    if args.model_save_path:
+        torch.save(model.state_dict(), args.model_save_path)
 
 
 if __name__ == "__main__":
