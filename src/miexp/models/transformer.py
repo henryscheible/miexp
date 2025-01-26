@@ -25,8 +25,8 @@ class AttentionBlock(nn.Module):
             hidden_dim, num_heads, bias=False, batch_first=True
         )
         # self.attn = nn.MultiheadAttention(hidden_dim, num_heads, bias=False, batch_first=True)
-        self.norm1 = nn.LayerNorm(hidden_dim, eps=1e-5)
-        self.norm2 = nn.LayerNorm(hidden_dim, eps=1e-5)
+        # self.norm1 = nn.LayerNorm(hidden_dim, eps=1e-5)
+        # self.norm2 = nn.LayerNorm(hidden_dim, eps=1e-5)
         self.linear = nn.Sequential(
             nn.Linear(hidden_dim, ff_dim), nn.ReLU(), nn.Linear(ff_dim, hidden_dim)
         )
@@ -40,8 +40,10 @@ class AttentionBlock(nn.Module):
         Returns:
             torch.Tensor: Output
         """
-        x = self.norm1(x + self.attn(x, x, x)[0])
-        x = self.norm2(x + self.linear(x))
+        # x = self.norm1(x + self.attn(x, x, x)[0])
+        # x = self.norm2(x + self.linear(x))
+        x = x + self.attn(x, x, x)[0]
+        x = x + self.linear(x)
         return x
 
 
@@ -96,17 +98,10 @@ class Transformer(torch.nn.Module):
             ],
             dim=1,
         )
-        # pos = (
-        #     torch.eye(self.N + 1, self.N)
-        #     .to(self.rank)
-        #     .unsqueeze(0)
-        #     .repeat(batch_size, 1, 1)
-        # )
-        dat = self.embeddings(x)
-        x = dat
-        # x = torch.cat([pos, dat], dim=2)
+        # dat = self.embeddings(x)
+        # x = dat
+        x = 
         x = self.transformer(x)
         x.to(self.rank)
         x = x[:, -1, :]
-        x = self.mlp_head(x)
         return x
