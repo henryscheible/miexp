@@ -57,3 +57,35 @@ class DoubleMajDataset(Dataset):
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:  # noqa: D105
         return (self.data[idx], self.labels[idx])
+
+
+class RandMajDataset(Dataset):
+    """Generate a dataset for the majority boolean function."""
+
+    def __init__(
+        self,
+        N: int,  # noqa: N803
+        frac: float = 0.5,
+        num_samples: int = 10000,
+    ):
+        """Inits MajDataset.
+
+        Args:
+            N (int): Size of the input boolean string
+            num_samples (int, optional): Size of the dataset. Defaults to 10000.
+            frac (float): Fraction of the input to consider
+        """
+        self.N = N
+        self.num_samples = num_samples
+        self.frac = frac
+        self.data = torch.randint(0, 2, (self.num_samples, self.N)).type(torch.float)
+        self.choice = torch.randperm(N)[: int(frac * N)]
+        self.labels = (
+            torch.sum(self.data[:, self.choice], dim=1) >= int(self.N * frac * 0.5)
+        ).type(torch.int)
+
+    def __len__(self) -> int:  # noqa: D105
+        return self.num_samples
+
+    def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:  # noqa: D105
+        return (self.data[idx], self.labels[idx])
