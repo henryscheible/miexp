@@ -10,6 +10,7 @@ from miexp.models.interptransformer import (
 )
 from miexp.script_util import parse_args_from_conf
 from miexp.train.train_util import eval_epoch, train_epoch
+from miexp.util.metrics import binary_accuracy
 
 
 class Configuration(BaseModel):
@@ -58,15 +59,19 @@ def main(args: Configuration) -> None:
         head_dim=args.head_dim,
     ).to(torch.device(args.device))
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=1e-3)
     criterion = torch.nn.CrossEntropyLoss()
     train_dataloader = DataLoader(train_data, batch_size=256, shuffle=True)
     eval_dataloader = DataLoader(eval_data, batch_size=256, shuffle=False)
     low_eval_dataloader = DataLoader(
-        low_threshold_eval_data, batch_size=256, shuffle=False
+        low_threshold_eval_data,
+        batch_size=256,
+        shuffle=False,
     )
     high_eval_dataloader = DataLoader(
-        high_threshold_eval_data, batch_size=256, shuffle=False
+        high_threshold_eval_data,
+        batch_size=256,
+        shuffle=False,
     )
 
     results = []
@@ -76,10 +81,21 @@ def main(args: Configuration) -> None:
         )
 
         eval_results = eval_epoch(model, eval_dataloader, torch.device(args.device))
-        eval_acc = torch.argmax(
-            torch.tensor(eval_results["probabilities"]), dim=1
-        ) == torch.tensor(eval_results["correct_outputs"])
-        cur_results["eval_acc"] = eval_acc.float().mean().item()
+        cur_results["eval_acc"] = binary_accuracy(
+            eval_results["probabilities"], eval_results["correct_outputs"]
+        )
+        cur_results["low_eval_acc"] = binary_accuracy(
+            eval_epoch(model, low_eval_dataloader, torch.device(args.device))[
+                "probabilities"
+            ],
+            low_threshold_eval_data.labels,
+        )
+        cur_results["high_eval_acc"] = binary_accuracy(
+            eval_epoch(model, high_eval_dataloader, torch.device(args.device))[
+                "probabilities"
+            ],
+            high_threshold_eval_data.labels,
+        )
         results.append(cur_results)
 
     if args.dataset_save_path is not None:

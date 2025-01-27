@@ -150,7 +150,7 @@ class SingleHeadTransformerNoEmbeddingNoMLP(nn.Module):
         """Perform the forward pass of the transformer model.
 
         Args:
-            x (torch.Tensor): Input tensor of shape (batch_size, seq_length, input_dim).
+            x (torch.Tensor): Input tensor of shape (batch_size, seq_length).
 
         Returns:
             torch.Tensor: Output tensor of shape (batch_size, seq_length, input_dim).

@@ -11,4 +11,5 @@ def binary_accuracy(logits: Tensor, labels: Tensor) -> float:
     Returns:
         float: The accuracy of the model.
     """
+    labels = labels.to(logits.device)
     return (logits.argmax(dim=1) == labels).float().mean().item()

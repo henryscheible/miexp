@@ -11,10 +11,10 @@ In other words, we should be able to see exactly why and how the transformer is 
 Our transformer is a single layer, single attention head transformer with no MLP layer and no positional encoding. Thus, it consists of the following parameters: 
 
 * Attention Head
-    * $W_Q$: shape (hidden_dim, head_dim)
-    * $W_K$: shape (hidden_dim, head_dim)
-    * $W_V$: shape (hidden_dim, head_dim)
-    * $W_O$: shape (head_dim, hidden_dim)
+    * $W_Q$: shape (head_dim, hidden_dim)
+    * $W_K$: shape (head_dim, hidden_dim)
+    * $W_V$: shape (head_dim, hidden_dim)
+    * $W_O$: shape (hidden_dim, head_dim)
 
 Given a bitstring $x$, we encode it as a (func_width, 3) sized matrix by one-hot encoding the binary vocabulary (with an extra token for the [CLS] token embedded at the beginning). As an example, the string 001101 would be encoded as the matrix
 
@@ -24,14 +24,14 @@ $$X = \begin{pmatrix}
 1 & 0 & 0 & 0 & 0 & 0 & 0
 \end{pmatrix}^T$$
 
-Let $h$ be the head dimensio (denoted head_dim below). After encoding, the attention head performs the following calculation to get the outut sequence 
+Let $h$ be the head dimension (denoted head_dim below). After encoding, the attention head performs the following calculation to get the outut sequence 
 
 $$
-A = \text{softmax}\left(\dfrac{(XW_Q)(XW_K)^T}{\sqrt{h}}\right)
+A = \text{softmax}\left(\dfrac{(XW_Q^T)(XQ_K^T)^T}{\sqrt{h}}\right)
 $$
 
 $$
-Y = AXW_O
+Y = AXW_O^T
 $$
 
 $Y$ has shape (func_width, 3), so we just consider the output corresponding to the cls token (the first row), giving a 3 dimensional vector. The first two components of that vector are taken as the logits for the 0 class and 1 class, respectively. 
@@ -73,7 +73,16 @@ Note only some of these numbers are consequential (i.e. only some are in the com
 
 Thus, we arrive at the following three parameters:
 0.34, -0.31, -0.71. The first stage of the transformer can be represented as 
-$$y = 0.34n_0 -0.31 n_1-0.71n_{CLS},$$
-where $n_0$, $n_1$, and $n_{CLS}$ are the number of 0s, 1s and CLS tokens in the string. This takes advantage of the fact that our transformer has no positional embedding and is thus completely additive across input positions.
+$$y_1 = 0.31n_0 +1.05 n_1+0.01n_{CLS},$$
+$$y_2 = 0.65n_0 +0.49 n_1+0.03n_{CLS},$$
 
-It is clear that this number is roughly positive when the bistring is not in majority and negative when the string is in majority. The final stage is multiplication by the $W_O$ matrix, which gives a higher logit for 0 when its input scalar is positive and a higher logit for 1 when its input scalar is negative, consistent with the previous sentence. Thus, we have fully understood the transfromer's mechanism.
+We know that $n_{CLS}=1$ and $n_0=20-n_1$, so we have 
+$$y_1 = 0.31(20-n_1) +1.05 n_1 +0.01 $$
+and 
+$$y_2 = 0.65(20-n_1) +0.49 n_1 +0.03 $$'
+
+Then, we get the logits
+$$L_0 = -2.43y_1 - 0.44 y_1 $$
+$$L_1 = 1.64y_1+1.60y_2
+
+Still need to spell out a few details.

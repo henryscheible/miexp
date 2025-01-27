@@ -79,7 +79,7 @@ def eval_epoch(
         correct_outputs.append(labels)
         probabilities.append(torch.softmax(output, dim=1))
     return {
-        "inputs": torch.stack(inputs),
-        "correct_outputs": torch.stack(correct_outputs),
-        "probabilities": torch.stack(probabilities),
+        "inputs": torch.concat(inputs),
+        "correct_outputs": torch.concat(correct_outputs),
+        "probabilities": torch.concat(probabilities),
     }
