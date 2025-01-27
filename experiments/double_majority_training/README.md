@@ -2,9 +2,9 @@
 
 ## Objective
 
-Train a very simple transformer to predict whether a bit string has over half of its bits as ones (whether it is in the formal language MAJORITY) to verify that our basic technique for interpreting transformer circuits works.
+Learn how transformers with non-monotonic targets learn over two head dimensions, and ensure that we can interpret that behavior.
 
-In other words, we should be able to see exactly why and how the transformer is outputting the results it outputs.
+To do this, we define a language called Double Majority which takes two thresholds, $\alpha_1$ and $\alpha_2$, and contains strings of length $n$ for which the number of 1s is in the interval $[\alpha_1 n,\alpha_2 n]$.
 
 ## Transformer Model
 
