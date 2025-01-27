@@ -1,6 +1,6 @@
 import pytest
 import torch
-from torch import nn
+from torch import Tensor, nn
 from torch.optim import SGD
 from torch.utils.data import DataLoader, TensorDataset
 
@@ -63,9 +63,9 @@ def test_eval_epoch(model, dataloader, device):
     assert "inputs" in result
     assert "correct_outputs" in result
     assert "probabilities" in result
-    assert isinstance(result["inputs"], list)
-    assert isinstance(result["correct_outputs"], list)
-    assert isinstance(result["probabilities"], list)
+    assert isinstance(result["inputs"], Tensor)
+    assert isinstance(result["correct_outputs"], Tensor)
+    assert isinstance(result["probabilities"], Tensor)
     assert (
         len(result["inputs"])
         == len(result["correct_outputs"])

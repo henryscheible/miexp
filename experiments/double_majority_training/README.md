@@ -50,6 +50,8 @@ See the hyperparameters use for our experiment here:
 | `head_dim` | 1 | Hidden dim of each attention head of the transformer | 
 | `num_epochs` | 300 | Number of epochs | 
 | `train_frac` | 0.4 | Fraction of sampled dataset to be used for training (the rest will be used for testing) |
+| `low_threshold` | 0.5 | Fraction of bits which must be 1 for label to change from 0 to 1
+| `high_threshold` | 0.9 | Fraction of bits which must be 1 for label to change from 1 back to 0 |
 
 
 ## Training Results

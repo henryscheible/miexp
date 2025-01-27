@@ -36,6 +36,16 @@ def main(args: Configuration) -> None:
         num_samples=args.dataset_size,
     )
 
+    low_threshold_eval_data = DoubleMajDataset(
+        args.func_width, low=args.low_threshold, high=1.0, num_samples=args.dataset_size
+    )
+    high_threshold_eval_data = DoubleMajDataset(
+        args.func_width,
+        low=0.0,
+        high=args.high_threshold,
+        num_samples=args.dataset_size,
+    )
+
     train_data, eval_data = torch.utils.data.random_split(
         dataset,
         [args.train_frac, 1 - args.train_frac],
@@ -52,6 +62,12 @@ def main(args: Configuration) -> None:
     criterion = torch.nn.CrossEntropyLoss()
     train_dataloader = DataLoader(train_data, batch_size=256, shuffle=True)
     eval_dataloader = DataLoader(eval_data, batch_size=256, shuffle=False)
+    low_eval_dataloader = DataLoader(
+        low_threshold_eval_data, batch_size=256, shuffle=False
+    )
+    high_eval_dataloader = DataLoader(
+        high_threshold_eval_data, batch_size=256, shuffle=False
+    )
 
     results = []
     for epoch in tqdm(range(args.num_epochs)):
