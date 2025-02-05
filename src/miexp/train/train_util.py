@@ -1,3 +1,5 @@
+from collections.abc import Mapping
+
 import torch
 from torch import Tensor, nn
 from torch.optim import Optimizer
@@ -10,7 +12,7 @@ def train_epoch(
     dataloader: DataLoader,
     device: torch.device,
     criterion: nn.Module,
-) -> dict[str, float | None]:
+) -> Mapping[str, float | None]:
     """Trains a binary classification model for one epoch.
 
     Args:

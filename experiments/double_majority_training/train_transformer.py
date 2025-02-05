@@ -1,6 +1,7 @@
 import pandas as pd
 import torch
 from pydantic import BaseModel
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -74,10 +75,16 @@ def main(args: Configuration) -> None:
         shuffle=False,
     )
 
+    scheduler = ReduceLROnPlateau(optimizer, "min", factor=0.5, patience=5)
+
     results = []
     for epoch in tqdm(range(args.num_epochs)):
-        cur_results = train_epoch(
-            model, optimizer, train_dataloader, torch.device(args.device), criterion
+        cur_results: dict[str, float | list[float] | None] = {}
+
+        cur_results.update(
+            train_epoch(
+                model, optimizer, train_dataloader, torch.device(args.device), criterion
+            )
         )
 
         eval_results = eval_epoch(model, eval_dataloader, torch.device(args.device))
@@ -96,7 +103,9 @@ def main(args: Configuration) -> None:
             ],
             high_threshold_eval_data.labels,
         )
+        cur_results["lr"] = scheduler.get_last_lr()
         results.append(cur_results)
+        scheduler.step(cur_results["loss"])  # type: ignore
 
     if args.dataset_save_path is not None:
         torch.save({"train": train_data, "eval": eval_data}, args.dataset_save_path)

@@ -36,7 +36,7 @@ num_matrices = len(filtered_state_dict)
 fig = make_subplots(
     rows=num_matrices // 3 + 1,
     cols=3,
-    subplot_titles=list(state_dict.keys()) + ["Effective QKV"],
+    subplot_titles=list(state_dict.keys()) + ["Effective QKV", "Effective QKVO"],
 )
 
 fig.update_layout(
@@ -52,6 +52,8 @@ with open("numbers.json", "w") as f:
         * state_dict["attention_head.w_v.weight"]
     ).cpu()
     json.dump(contributions.tolist(), f)
+
+final_contributions = state_dict["attention_head.w_o.weight"] @ contributions
 
 # Add a heatmap for each matrix in state_dict
 for i, (name, matrix) in enumerate(filtered_state_dict.items()):
@@ -70,6 +72,16 @@ fig.add_trace(
     row=(i // 3) + 1,
     col=(i % 3) + 1,
 )
+
+fig.add_trace(
+    go.Heatmap(
+        z=final_contributions.cpu().numpy(),
+        coloraxis="coloraxis",
+    ),
+    row=((i + 1) // 3) + 1,
+    col=((i + 1) % 3) + 1,
+)
+
 
 fig.update_traces(texttemplate="%{z:.2f}")
 

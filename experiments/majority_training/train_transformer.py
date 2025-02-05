@@ -48,8 +48,11 @@ def main(args: Configuration) -> None:
 
     results = []
     for epoch in tqdm(range(args.num_epochs)):
-        cur_results = train_epoch(
-            model, optimizer, train_dataloader, torch.device(args.device), criterion
+        cur_results: dict[str, float | None] = {}
+        cur_results.update(
+            train_epoch(
+                model, optimizer, train_dataloader, torch.device(args.device), criterion
+            )
         )
 
         eval_results = eval_epoch(model, eval_dataloader, torch.device(args.device))

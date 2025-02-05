@@ -8,7 +8,7 @@ To do this, we define a language called Double Majority which takes two threshol
 
 ## Transformer Model
 
-Our transformer is a single layer, single attention head transformer with no MLP layer and no positional encoding. Thus, it consists of the following parameters: 
+Our transformer is a single layer, single attention head transformer with no MLP layer, no positional encoding, and no residual stream. Thus, it consists of the following parameters: 
 
 * Attention Head
     * $W_Q$: shape (head_dim, hidden_dim)
@@ -45,13 +45,17 @@ See the hyperparameters use for our experiment here:
 | Hyperparamter | Value | Explanation |
 | ------------- | ----- | ----------- |
 | `lr`          | 0.01  | Learning Rate |
-| `dataset_size`| 1000  | Number of bitstrings to sample |
-| `func_width` | 20 | Length of bitstrings (functions) |
-| `head_dim` | 1 | Hidden dim of each attention head of the transformer | 
-| `num_epochs` | 300 | Number of epochs | 
+| `dataset_size`| 2000  | Number of bitstrings to sample |
+| `func_width` | 10 | Length of bitstrings (functions) |
+| `head_dim` | 2 | Hidden dim of each attention head of the transformer | 
+| `num_epochs` | 1000 | Number of epochs | 
 | `train_frac` | 0.4 | Fraction of sampled dataset to be used for training (the rest will be used for testing) |
-| `low_threshold` | 0.5 | Fraction of bits which must be 1 for label to change from 0 to 1
-| `high_threshold` | 0.9 | Fraction of bits which must be 1 for label to change from 1 back to 0 |
+| `low_threshold` | 0.4 | Fraction of bits which must be 1 for label to change from 0 to 1
+| `high_threshold` | 0.7 | Fraction of bits which must be 1 for label to change from 1 back to 0 |
+
+Note that we used a learning rate scheduler with the following configuration: 
+
+```ReduceLROnPlateau(optimizer, "min", factor=0.5, patience=5)```
 
 
 ## Training Results
@@ -69,20 +73,6 @@ As shown in the figure, the model quickly converges to perfect accuracy for both
 Note only some of these numbers are consequential (i.e. only some are in the computational path of the network):
 
 1. Only the query at index 2 matters because we are only reading from the output of the [CLS] token (token id 2).
-2. As in any transformer, we can combine the w_k and w_v matrices because they always operate together. In this case that just comes down to elementwise multiplication because they are just vectors
+2. As in any transformer, we can combine the w_k and w_v matrices because they always operate together. In this case that just comes down to elementwise multiplication because they are just vectors. 
 
-Thus, we arrive at the following three parameters:
-0.34, -0.31, -0.71. The first stage of the transformer can be represented as 
-$$y_1 = 0.31n_0 +1.05 n_1+0.01n_{CLS},$$
-$$y_2 = 0.65n_0 +0.49 n_1+0.03n_{CLS},$$
-
-We know that $n_{CLS}=1$ and $n_0=20-n_1$, so we have 
-$$y_1 = 0.31(20-n_1) +1.05 n_1 +0.01 $$
-and 
-$$y_2 = 0.65(20-n_1) +0.49 n_1 +0.03 $$'
-
-Then, we get the logits
-$$L_0 = -2.43y_1 - 0.44 y_1 $$
-$$L_1 = 1.64y_1+1.60y_2
-
-Still need to spell out a few details.
+Thus, the Effective QKV matrix above represents the linear transformation from the vector $[n_0, n_1, n_{CLS}]$ to the 2-dimensional hidden vector of the attention head. The $W_O$ weight above represents the linear transformation from the 2-dimensional hidden vector to the logit vector $[y_0, y_1, y_{CLS}]$. Effective QKVO represents the composition of these two transformations. The output of the network is controlled by $\text{sgn}(y_1-y_0)$ because we simply compare which is greater to select the output. Because $\text{sgn}$ and all linear transformations are monotonic, this model is monotonic in $[n_0, n_1, n_{CLS}]$, but the function we are trying to model isn't. Thus, it is impossible for a transformer of this type to learn DOUBLE MAJORITY.
