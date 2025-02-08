@@ -99,9 +99,9 @@ class MultiComponentSpectrumDataset(Dataset):
         """Inits MultiComponentSpectrumDataset.
 
         Args:
-            N (int): Size of the input boolean string
-            coeffs (Tensor): Coefficients for the components
-            comps (Tensor): The fourier components of the function (boolean valued)
+            N (int): Size of the input boolean string.
+            coeffs (Tensor): Coefficients for the components (between -1 and 1) (Shape: (1, num_components))
+            comps (Tensor): The fourier components of the function (boolean valued) (Shape: (num_components, N))
             num_samples (int, optional): Size of the dataset. Defaults to 10000.
         """
         assert len(coeffs) == len(comps), (
@@ -129,9 +129,9 @@ class MultiComponentSpectrumDataset(Dataset):
         """Generate the labels for the data.
 
         Args:
-            data (Tensor): Data to generate the labels for
-            coeffs (Tensor): Coeffients for the components
-            comps (Tensor): The fourier components of the function
+            data (Tensor): Data to generate the labels for. (Shape: (num_samples, N))
+            coeffs (Tensor): Coeffients for the components. (Shape: (1, num_components))
+            comps (Tensor): The fourier components of the function. (Shape: (num_components, N))
 
         Returns:
             Tensor: Labels for the data.
