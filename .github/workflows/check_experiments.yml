@@ -1,0 +1,26 @@
+name: Check Experiments
+
+on: [push]
+
+jobs:
+  check-experiment:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: "pyproject.toml"
+
+      - name: Install the project
+        run: uv sync --all-extras --dev
+
+      - name: Check Majority Training
+        run: cd experiments/majority_training && make train_dry_run
