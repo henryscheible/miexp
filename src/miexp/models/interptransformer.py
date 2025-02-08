@@ -60,7 +60,7 @@ class AttentionHead(nn.Module):
         self.w_q = nn.Linear(hidden_dim, head_dim, bias=False)
         self.w_k = nn.Linear(hidden_dim, head_dim, bias=False)
         self.w_v = nn.Linear(hidden_dim, head_dim, bias=False)
-        # self.w_o = nn.Linear(head_dim, hidden_dim) --> Should not need this for a single head.
+        self.w_o = nn.Linear(head_dim, hidden_dim)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Perform the forward pass of the transformer model.
@@ -75,7 +75,7 @@ class AttentionHead(nn.Module):
         k = self.w_k(x)
         v = self.w_v(x)
         A = torch.softmax(q @ k.transpose(-1, -2) / (self.head_dim**0.5), dim=-1)  # noqa: N806
-        y = A @ v
+        y = self.w_o(A @ v)
         return y
 
 

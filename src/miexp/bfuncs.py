@@ -93,13 +93,15 @@ class RandMajDataset(Dataset):
 
 
 class MultiComponentSpectrumDataset(Dataset):
-    """Generate a dataset for the two component spectrum boolean function."""
+    """Generate a dataset for the multi-component spectrum boolean function."""
 
     def __init__(self, N: int, coeffs: Tensor, comps: Tensor, num_samples: int = 10000):  # noqa: N803
-        """Inits TwoComponentSpectrumDataset.
+        """Inits MultiComponentSpectrumDataset.
 
         Args:
             N (int): Size of the input boolean string
+            coeffs (Tensor): Coefficients for the components
+            comps (Tensor): The fourier components of the function (boolean valued)
             num_samples (int, optional): Size of the dataset. Defaults to 10000.
         """
         assert len(coeffs) == len(comps), (
