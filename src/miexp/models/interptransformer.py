@@ -80,6 +80,55 @@ class SingleHeadTransformer(nn.Module):
         return y
 
 
+class SingleHeadTransformerOneHotPositionalNoMLP(nn.Module):
+    """SingleHeadTransformerOneHotPositionalNoMLP is a neural network module that applies an one hot embedding on both token and position, then a single attention head, then by an unembedding."""
+
+    def __init__(self, vocab_size: int, head_dim: int, max_seq_len: int) -> None:
+        """Initializes the SingleHeadTransformerOneHotPositionalNoMLP.
+
+        Args:
+            vocab_size (int): The size of the vocabulary.
+            head_dim (int): The dimensionality of the attention head.
+            hidden_dim (int): The dimensionality of the hidden layer.
+            max_seq_len (int): The maximum sequence length.
+        """
+        super().__init__()
+        hidden_dim = vocab_size + 1 + max_seq_len
+        self.embedding = nn.Embedding(vocab_size + 1, vocab_size + 1)
+        self.embedding.weight = nn.Parameter(torch.eye(vocab_size + 1))
+        self.embedding.weight.requires_grad = False
+        self.pos_embedding = nn.Embedding(max_seq_len, max_seq_len)
+        self.pos_embedding.weight = nn.Parameter(torch.eye(max_seq_len))
+        self.pos_embedding.weight.requires_grad = False
+        self.attention_head = AttentionHead(head_dim, hidden_dim)
+        self.unembedding = nn.Linear(hidden_dim, vocab_size + 1, bias=False)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Perform the forward pass of the transformer model.
+
+        Args:
+            x (torch.Tensor): Input tensor of shape (batch_size, seq_length, input_dim).
+
+        Returns:
+            torch.Tensor: Output tensor of shape (batch_size, seq_length, input_dim).
+        """
+        x = torch.cat(
+            [torch.ones(x.shape[0], 1, dtype=torch.long, device=x.device) * 2, x], dim=1
+        )
+        y = torch.cat(
+            [
+                self.embedding(x),
+                self.pos_embedding(torch.arange(x.shape[1], device=x.device))
+                .unsqueeze(0)
+                .expand(x.shape[0], -1, -1),
+            ],
+            dim=-1,
+        )
+        y = self.attention_head(y) + y
+        y = self.unembedding(y[:, 0, :])
+        return y
+
+
 class SingleHeadTransformerNoEmbedding(nn.Module):
     """SingleHeadTransformer is a neural network module that applies an embedding, then a single attention head followed by a multi-layer perceptron (MLP), followed by an unembedding."""
 
