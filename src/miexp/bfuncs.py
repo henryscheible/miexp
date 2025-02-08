@@ -113,6 +113,8 @@ class MultiComponentSpectrumDataset(Dataset):
         assert comps.shape[1] == N, (
             "The components should have the same size as the input"
         )
+        assert len(comps.shape) == 2, "The components should be a 2D tensor"
+        assert len(coeffs.shape) == 1, "The coefficients should be a 2D tensor"
 
         self.N = N
         self.num_samples = num_samples
@@ -128,14 +130,16 @@ class MultiComponentSpectrumDataset(Dataset):
     def generate_labels(self, data: Tensor, coeffs: Tensor, comps: Tensor) -> Tensor:
         """Generate the labels for the data.
 
+        All tensors should have dtype float.
+
         Args:
             data (Tensor): Data to generate the labels for. (Shape: (num_samples, N))
-            coeffs (Tensor): Coeffients for the components. (Shape: (1, num_components))
+            coeffs (Tensor): Coeffients for the components. (Shape: (num_components))
             comps (Tensor): The fourier components of the function. (Shape: (num_components, N))
 
         Returns:
             Tensor: Labels for the data.
         """
-        labels = (1 + torch.sign(data.to(torch.float) @ comps.T @ coeffs.T)) // 2
+        labels = (1 + torch.sign(data.to(torch.float) @ comps.T @ coeffs)) // 2
 
         return labels
