@@ -64,7 +64,7 @@ As described above, we trained the model for `num_epochs` epochs
 
 ![Training Results](train_results_fig.svg)
 
-As shown in the figure, the model quickly converges to perfect accuracy for both training and validation splits.
+As shown in the figure, the model fails to learn double majority.
 
 ## Interpretation
 
