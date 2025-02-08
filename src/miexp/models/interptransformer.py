@@ -1,9 +1,6 @@
 import torch
 from torch import nn
 
-# class InterpTransformer(nn.Module):
-#     pass
-
 
 class AttentionHead(nn.Module):
     """AttentionHead is a neural network module that performs self-attention."""
@@ -18,10 +15,10 @@ class AttentionHead(nn.Module):
         super().__init__()
         self.hidden_dim = hidden_dim
         self.head_dim = head_dim
-        self.w_q = nn.Linear(hidden_dim, head_dim)
-        self.w_k = nn.Linear(hidden_dim, head_dim)
-        self.w_v = nn.Linear(hidden_dim, head_dim)
-        self.w_o = nn.Linear(head_dim, hidden_dim)
+        self.w_q = nn.Linear(hidden_dim, head_dim, bias=False)
+        self.w_k = nn.Linear(hidden_dim, head_dim, bias=False)
+        self.w_v = nn.Linear(hidden_dim, head_dim, bias=False)
+        self.w_o = nn.Linear(head_dim, hidden_dim, bias=False)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Perform the forward pass of the transformer model.
@@ -250,7 +247,3 @@ class AttentionLayer(nn.Module):
         y = sum([head(x) for head in self.attention_heads])
         y = self.mlp(y)
         return y
-
-
-# class MLPLayer(nn.Module):
-#     pass
