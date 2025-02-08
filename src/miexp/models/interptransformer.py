@@ -1,9 +1,6 @@
 import torch
 from torch import nn
 
-# class InterpTransformer(nn.Module):
-#     pass
-
 
 class AttentionHead(nn.Module):
     """AttentionHead is a neural network module that performs self-attention."""
@@ -18,10 +15,10 @@ class AttentionHead(nn.Module):
         super().__init__()
         self.hidden_dim = hidden_dim
         self.head_dim = head_dim
-        self.w_q = nn.Linear(hidden_dim, head_dim)
-        self.w_k = nn.Linear(hidden_dim, head_dim)
-        self.w_v = nn.Linear(hidden_dim, head_dim)
-        self.w_o = nn.Linear(head_dim, hidden_dim)
+        self.w_q = nn.Linear(hidden_dim, head_dim, bias=False)
+        self.w_k = nn.Linear(hidden_dim, head_dim, bias=False)
+        self.w_v = nn.Linear(hidden_dim, head_dim, bias=False)
+        self.w_o = nn.Linear(head_dim, hidden_dim, bias=False)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Perform the forward pass of the transformer model.
@@ -102,7 +99,7 @@ class SingleHeadTransformerNoEmbedding(nn.Module):
             nn.ReLU(),
             nn.Linear(hidden_dim, hidden_dim),
         )
-        self.unembedding = nn.Linear(hidden_dim, vocab_size + 1)
+        self.unembedding = nn.Linear(hidden_dim, vocab_size + 1, bias=False)
         self.unembedding.weight = nn.Parameter(torch.eye(vocab_size + 1))
         self.unembedding.weight.requires_grad = False
 
@@ -121,6 +118,45 @@ class SingleHeadTransformerNoEmbedding(nn.Module):
         y = self.embedding(x)
         y = self.attention_head(y) + y
         # y = self.mlp(y) + y
+        y = self.unembedding(y[:, 0, :])
+        return y
+
+
+class SingleHeadTransformerNoEmbeddingNoMLP(nn.Module):
+    """SingleHeadTransformer is a neural network module that applies an embedding, then a single attention head followed by a multi-layer perceptron (MLP), followed by an unembedding."""
+
+    def __init__(self, vocab_size: int, head_dim: int) -> None:
+        """Initializes the SingleHeadTransformer.
+
+        Args:
+            vocab_size (int): The size of the vocabulary.
+            head_dim (int): The dimensionality of the attention head.
+            hidden_dim (int): The dimensionality of the hidden layer.
+        """
+        super().__init__()
+        hidden_dim = vocab_size + 1
+        self.embedding = nn.Embedding(vocab_size + 1, hidden_dim)
+        self.embedding.weight = nn.Parameter(torch.eye(vocab_size + 1))
+        self.embedding.weight.requires_grad = False
+        self.attention_head = AttentionHead(head_dim, hidden_dim)
+        self.unembedding = nn.Linear(hidden_dim, vocab_size + 1, bias=False)
+        self.unembedding.weight = nn.Parameter(torch.eye(vocab_size + 1))
+        self.unembedding.weight.requires_grad = False
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Perform the forward pass of the transformer model.
+
+        Args:
+            x (torch.Tensor): Input tensor of shape (batch_size, seq_length, input_dim).
+
+        Returns:
+            torch.Tensor: Output tensor of shape (batch_size, seq_length, input_dim).
+        """
+        x = torch.cat(
+            [torch.ones(x.shape[0], 1, dtype=torch.long, device=x.device) * 2, x], dim=1
+        )
+        y = self.embedding(x)
+        y = self.attention_head(y) + y
         y = self.unembedding(y[:, 0, :])
         return y
 
@@ -162,7 +198,3 @@ class AttentionLayer(nn.Module):
         y = sum([head(x) for head in self.attention_heads])
         y = self.mlp(y)
         return y
-
-
-# class MLPLayer(nn.Module):
-#     pass
