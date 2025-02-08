@@ -1,5 +1,7 @@
+from collections.abc import Mapping
+
 import torch
-from torch import nn
+from torch import Tensor, nn
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
@@ -10,7 +12,7 @@ def train_epoch(
     dataloader: DataLoader,
     device: torch.device,
     criterion: nn.Module,
-) -> dict[str, float | None]:
+) -> Mapping[str, float | None]:
     """Trains a binary classification model for one epoch.
 
     Args:
@@ -53,7 +55,7 @@ def train_epoch(
 
 def eval_epoch(
     model: nn.Module, dataloader: DataLoader, device: torch.device
-) -> dict[str, list[float]]:
+) -> dict[str, Tensor]:
     """Evaluates the binary classification model for one epoch on the provided dataloader.
 
     Args:
@@ -62,7 +64,7 @@ def eval_epoch(
         device (torch.device): The device (CPU or GPU) to perform the evaluation on.
 
     Returns:
-        dict[str, list[float]]: A dictionary containing:
+        dict[str, Tensor]: A dictionary containing:
             - "inputs": List of input data.
             - "correct_outputs": List of correct labels.
             - "probabilities": List of predicted probabilities for each class.
@@ -75,11 +77,11 @@ def eval_epoch(
         input = input.to(device)
         labels = labels.to(device)
         output = model(input)
-        inputs += input.tolist()
-        correct_outputs += labels.tolist()
-        probabilities += torch.softmax(output, dim=1).tolist()
+        inputs.append(input)
+        correct_outputs.append(labels)
+        probabilities.append(torch.softmax(output, dim=1))
     return {
-        "inputs": inputs,
-        "correct_outputs": correct_outputs,
-        "probabilities": probabilities,
+        "inputs": torch.concat(inputs),
+        "correct_outputs": torch.concat(correct_outputs),
+        "probabilities": torch.concat(probabilities),
     }

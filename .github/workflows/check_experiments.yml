@@ -24,3 +24,6 @@ jobs:
 
       - name: Check Majority Training
         run: cd experiments/majority_training && make train_dry_run
+
+      - name: Check Double Majority Training
+        run: cd experiments/double_majority_training && make train_dry_run

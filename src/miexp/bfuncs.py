@@ -46,7 +46,7 @@ class DoubleMajDataset(Dataset):
         self.num_samples = num_samples
         self.high = high
         self.low = low
-        self.data = torch.randint(0, 2, (self.num_samples, self.N)).type(torch.float)
+        self.data = torch.randint(0, 2, (self.num_samples, self.N)).type(torch.int)
         self.labels = (
             (torch.sum(self.data, dim=1) < (self.N * self.high))
             & (torch.sum(self.data, dim=1) >= (self.N * self.low))
