@@ -47,9 +47,9 @@ def dataloader():
 def test_train_epoch(model, optimizer, dataloader, device, criterion):
     result = train_epoch(model, optimizer, dataloader, device, criterion)
 
-    assert "acc" in result
+    assert "train_acc" in result
     assert "loss" in result
-    assert isinstance(result["acc"], float)
+    assert isinstance(result["train_acc"], float)
     assert isinstance(result["loss"], float)
     for name, param in model.named_parameters():
         if param.grad is not None:
