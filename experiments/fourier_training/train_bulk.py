@@ -46,7 +46,15 @@ if __name__ == "__main__":
     )
     metadata_table = pd.DataFrame(
         columns=pd.Series(
-            ["uuid", "coeffs", "comps", "random_seed", "min_loss", "max_eval_acc"]
+            [
+                "run_uuid",
+                "function_uuid",
+                "coeffs",
+                "comps",
+                "random_seed",
+                "min_loss",
+                "max_eval_acc",
+            ]
         )
     )
 
@@ -57,6 +65,7 @@ if __name__ == "__main__":
         tensor_comps = (
             torch.rand(args.num_components, args.func_width) > args.comp_p
         ).type(torch.int)
+        func_uuid = uuid.uuid4()
         for i in range(args.num_trials_per_function):
             random_seed = torch.randint(0, 1000000, (1,)).item()
             random_seed = random_seed
@@ -64,15 +73,19 @@ if __name__ == "__main__":
             comps = tensor_comps.tolist()
             metadata_table.loc[len(metadata_table)] = pd.Series(
                 {
-                    "uuid": uuid.uuid4(),
+                    "run_uuid": uuid.uuid4(),
+                    "function_uuid": func_uuid,
                     "coeffs": coeffs,
                     "comps": comps,
                     "random_seed": random_seed,
                 }
             )
 
+    metadata_table = metadata_table.set_index("run_uuid")
+
     for i in tqdm(range(len(metadata_table))):
-        metadata = metadata_table.loc[i]
+        metadata = metadata_table.iloc[i]
+        run_uuid = metadata_table.index[i]
         output = train_transformer_fourier(
             FourierTrainingConfiguration(
                 device=args.device,
@@ -93,14 +106,19 @@ if __name__ == "__main__":
         model_obj = output.params_dict
         min_loss = small_events_table["loss"].min()
         max_eval_acc = small_events_table["eval_acc"].max()
-        metadata_table.loc[i, "min_loss"] = min_loss
-        metadata_table.loc[i, "max_eval_acc"] = max_eval_acc
-        small_events_table["uuid"] = metadata["uuid"]
+        metadata_table.loc[run_uuid, "min_loss"] = min_loss
+        metadata_table.loc[run_uuid, "max_eval_acc"] = max_eval_acc
+        small_events_table["uuid"] = run_uuid
 
         small_events_table = small_events_table.reindex(
             columns=events_table.columns, fill_value=None
         )
-        events_table = pd.concat([events_table, small_events_table], ignore_index=True)
+        if len(events_table) > 0:
+            events_table = pd.concat(
+                [events_table, small_events_table], ignore_index=True
+            )
+        else:
+            events_table = small_events_table
         model_objs["uuid"] = model_obj
         torch.save(model_objs, args.model_save_path)
         events_table.to_csv(args.event_csv_save_path)

@@ -170,5 +170,6 @@ def train_transformer_fourier(args: FourierTrainingConfiguration) -> OutputData:
         model.save_to_checkpoint(args.model_save_path)
 
     return OutputData(
-        events_log=pd.DataFrame.from_records(results), params_dict=model.get_save_dict()
+        events_log=pd.DataFrame.from_records(results).reset_index(names="epoch"),
+        params_dict=model.get_save_dict(),
     )
