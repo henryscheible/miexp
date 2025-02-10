@@ -143,3 +143,11 @@ class MultiComponentSpectrumDataset(Dataset):
         labels = (1 + torch.sign(data.to(torch.float) @ comps.T @ coeffs)) // 2
 
         return labels
+
+    def get_percent_positive(self) -> float:
+        """Calculate the percentage of positive labels.
+
+        Returns:
+            float: The mean value of the labels, representing the percentage of positive labels.
+        """
+        return self.labels.mean().item()

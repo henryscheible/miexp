@@ -54,6 +54,7 @@ if __name__ == "__main__":
                 "random_seed",
                 "min_loss",
                 "max_eval_acc",
+                "ds_fraction_positive",
             ]
         )
     )
@@ -108,6 +109,7 @@ if __name__ == "__main__":
         max_eval_acc = small_events_table["eval_acc"].max()
         metadata_table.loc[run_uuid, "min_loss"] = min_loss
         metadata_table.loc[run_uuid, "max_eval_acc"] = max_eval_acc
+        metadata_table.loc[run_uuid, "ds_fraction_positive"] = output.ds_positive_frac
         small_events_table["uuid"] = run_uuid
 
         small_events_table = small_events_table.reindex(

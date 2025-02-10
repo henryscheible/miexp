@@ -60,6 +60,7 @@ class OutputData(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
     events_log: pd.DataFrame
     params_dict: dict
+    ds_positive_frac: float
 
 
 def train_transformer_fourier(args: FourierTrainingConfiguration) -> OutputData:
@@ -172,4 +173,5 @@ def train_transformer_fourier(args: FourierTrainingConfiguration) -> OutputData:
     return OutputData(
         events_log=pd.DataFrame.from_records(results).reset_index(names="epoch"),
         params_dict=model.get_save_dict(),
+        ds_positive_frac=dataset.get_percent_positive(),
     )
