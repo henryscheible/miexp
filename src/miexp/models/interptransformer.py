@@ -1,6 +1,8 @@
 import torch
 from torch import nn
 
+from miexp.models.btransformer import SaveableModule
+
 
 class AttentionHead(nn.Module):
     """AttentionHead is a neural network module that performs self-attention."""
@@ -77,7 +79,7 @@ class SingleHeadTransformer(nn.Module):
         return y
 
 
-class SingleHeadTransformerOneHotPositionalNoMLP(nn.Module):
+class SingleHeadTransformerOneHotPositionalNoMLP(SaveableModule):
     """SingleHeadTransformerOneHotPositionalNoMLP is a neural network module that applies an one hot embedding on both token and position, then a single attention head, then by an unembedding."""
 
     def __init__(self, vocab_size: int, head_dim: int, max_seq_len: int) -> None:
@@ -91,6 +93,13 @@ class SingleHeadTransformerOneHotPositionalNoMLP(nn.Module):
         """
         super().__init__()
         hidden_dim = vocab_size + 1 + max_seq_len
+        self.hyperparameters.update(
+            {
+                "vocab_size": vocab_size,
+                "head_dim": head_dim,
+                "max_seq_len": max_seq_len,
+            }
+        )
         self.embedding = nn.Embedding(vocab_size + 1, vocab_size + 1)
         self.embedding.weight = nn.Parameter(torch.eye(vocab_size + 1))
         self.embedding.weight.requires_grad = False

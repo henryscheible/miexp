@@ -43,7 +43,7 @@ def train_epoch(
         total_train_acc += torch.sum(torch.argmax(output, dim=1) == labels).item()
         total_items += len(input)
     return {
-        "acc": total_train_acc / total_items,
+        "train_acc": total_train_acc / total_items,
         "loss": total_train_loss / total_items,
         **{
             f"norm/{name}": torch.norm(param.grad).item()

@@ -1,8 +1,76 @@
-from typing import Self
+from typing import Any, Self
 
 import pydantic
 import torch
 from torch import FloatTensor, Tensor, nn
+
+
+class SaveableModule(nn.Module):
+    """Module which can be saved to and loaded from a checkpoint."""
+
+    def __init__(self) -> None:
+        """Inits SaveableModule."""
+        self.hyperparameters: dict[str, Any] = {}
+        super().__init__()
+
+    def save_to_checkpoint(self, checkpoint_path: str) -> None:
+        """Save the model (including parameters and architectural hyperparameters) to a .pt file.
+
+        Args:
+            checkpoint_path (str): Path to save model to
+        """
+        state_dict = self.state_dict()
+        torch.save(
+            {"hyperparameters": self.hyperparameters, "state_dict": state_dict},
+            checkpoint_path,
+        )
+
+    def get_save_dict(self) -> dict[str, Any]:
+        """Get the dictionary that would be saved by save_to_checkpoint.
+
+        Returns:
+            dict: Save dict for the model
+        """
+        state_dict = self.state_dict()
+        return {"hyperparameters": self.hyperparameters, "state_dict": state_dict}
+
+    @classmethod
+    def load_from_dict(
+        cls, save_dict: dict[str, Any], map_device: torch.device = torch.device("cpu")
+    ) -> Self:
+        """Load the model from a save dict (including parameters and architectural hyperparameters).
+
+        Args:
+            save_dict (dict): Save dict for the model
+            map_device (torch.device | None): device (cpu/gpu) to place the model on. Defaults to cpu
+
+        Returns:
+            Self: Instantiated model with given parameters and hyperparameters
+        """
+        model = cls(**save_dict["hyperparameters"])
+        model.load_state_dict(save_dict["state_dict"])
+        if map_device is not None:
+            model.to(map_device)
+        return model
+
+    @classmethod
+    def load_from_checkpoint(
+        cls, checkpoint_path: str, map_device: torch.device = torch.device("cpu")
+    ) -> Self:
+        """Load the model from a checkpoint (including parameters and architectural hyperparameters).
+
+        Args:
+            checkpoint_path (str): Path to read the model from. Must unpickle to a dict with "hyperparameters" and "state_dict" keys
+            map_device (torch.device | None): device (cpu/gpu) to place the model on. Defaults to cpu
+
+        Returns:
+            Self: Instantiated model with given parameters and hyperparameters
+        """
+        checkpoint = torch.load(
+            checkpoint_path,
+            map_location=map_device,
+        )
+        return cls.load_from_dict(checkpoint, map_device)
 
 
 class BooleanTransformer(nn.Module):
