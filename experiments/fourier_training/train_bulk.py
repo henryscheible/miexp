@@ -51,7 +51,7 @@ if __name__ == "__main__":
     model_objs = {}
 
     for func_index in range(args.num_functions):
-        tensor_coeffs = torch.rand(args.num_components)
+        tensor_coeffs = torch.rand(args.num_components) * 2 - 1
         tensor_comps = (
             torch.rand(args.num_components, args.func_width) > args.comp_p
         ).type(torch.int)
