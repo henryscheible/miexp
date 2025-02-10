@@ -5,6 +5,7 @@ import torch
 from pydantic import BaseModel
 from tqdm import tqdm
 
+from miexp.bfuncs import MultiComponentSpectrumDataset
 from miexp.script_util import parse_args_from_conf
 from miexp.train.fourier import FourierTrainingConfiguration, train_transformer_fourier
 
@@ -27,6 +28,8 @@ class BulkConfiguration(BaseModel):
     comp_p: float
     num_trials_per_function: int
     init_random_seed: int
+    low_reject_threshold: float
+    high_reject_threshold: float
 
 
 if __name__ == "__main__":
@@ -62,16 +65,23 @@ if __name__ == "__main__":
     model_objs = {}
 
     for func_index in range(args.num_functions):
-        tensor_coeffs = torch.rand(args.num_components) * 2 - 1
-        tensor_comps = (
-            torch.rand(args.num_components, args.func_width) > args.comp_p
-        ).type(torch.int)
+        frac = 0
+        while not (args.low_reject_threshold <= frac <= args.high_reject_threshold):
+            tensor_coeffs = torch.rand(args.num_components) * 2 - 1
+            tensor_comps = (
+                torch.rand(args.num_components, args.func_width) > args.comp_p
+            ).type(torch.float)
+            test_ds = MultiComponentSpectrumDataset(
+                args.func_width, tensor_coeffs, tensor_comps, num_samples=100
+            )
+            frac = test_ds.get_percent_positive()
+
         func_uuid = uuid.uuid4()
         for i in range(args.num_trials_per_function):
             random_seed = torch.randint(0, 1000000, (1,)).item()
             random_seed = random_seed
-            coeffs = tensor_coeffs.tolist()
-            comps = tensor_comps.tolist()
+            coeffs = tensor_coeffs.tolist()  # type: ignore
+            comps = tensor_comps.tolist()  # type: ignore
             metadata_table.loc[len(metadata_table)] = pd.Series(
                 {
                     "run_uuid": uuid.uuid4(),

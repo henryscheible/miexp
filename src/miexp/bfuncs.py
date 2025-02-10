@@ -150,4 +150,4 @@ class MultiComponentSpectrumDataset(Dataset):
         Returns:
             float: The mean value of the labels, representing the percentage of positive labels.
         """
-        return self.labels.mean().item()
+        return self.labels.type(torch.float).mean().item()
