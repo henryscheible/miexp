@@ -26,10 +26,12 @@ class BulkConfiguration(BaseModel):
     num_functions: int
     comp_p: float
     num_trials_per_function: int
+    init_random_seed: int
 
 
 if __name__ == "__main__":
     args = parse_args_from_conf(BulkConfiguration)
+    torch.manual_seed(args.init_random_seed)
     events_table = pd.DataFrame(
         columns=pd.Series(
             [

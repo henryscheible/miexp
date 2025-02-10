@@ -18,4 +18,7 @@ bulk_train:
 	uv run python train_bulk.py --device mps --lr 0.01 --wd 0 --dataset_size 500 --func_width 10 \
 	--head_dim 3 --num_heads 1 --event_csv_save_path results/bulk_events.csv --metadata_csv_save_path results/bulk_metadata.csv \
 	--num_epochs 100 --model_save_path results/bulk_models.csv --train_frac 0.5 --num_components 4 --comp_p 0.3 \
-	--num_trials_per_function 5 --num_functions 5
+	--num_trials_per_function 5 --num_functions 5 --init_random_seed 0
+
+streamlit:
+	uv run streamlit run streamlit_vis.py
