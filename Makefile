@@ -1,6 +1,6 @@
 .PHONY: check lint lint-checkonly type-check
 
-check: lint type-check test
+check: lint type-check test-with-coverage
 
 lint: 
 	uvx ruff check --fix
@@ -15,3 +15,6 @@ type-check:
 
 test:
 	uv run pytest
+
+test-with-coverage:
+	uv run pytest --cov-report term --cov src
