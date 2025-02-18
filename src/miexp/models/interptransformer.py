@@ -22,20 +22,28 @@ class AttentionHead(nn.Module):
         self.w_v = nn.Linear(hidden_dim, head_dim, bias=False)
         self.w_o = nn.Linear(head_dim, hidden_dim, bias=False)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self, x: torch.Tensor, head_dim_mask: torch.Tensor | None = None
+    ) -> torch.Tensor:
         """Perform the forward pass of the transformer model.
 
         Args:
             x (torch.Tensor): Input tensor of shape (batch_size, seq_length, hidden_dim).
+            head_dim_mask (torch.Tensor): Mask for each head dimension. 1 means active. Integer Tensor of shape (head_dim,).
 
         Returns:
             torch.Tensor: Output tensor of shape (batch_size, seq_length, hidden_dim).
         """
+        if head_dim_mask is None:
+            head_dim_mask = torch.ones(
+                (self.head_dim,), dtype=torch.int, device=x.device
+            )
         q = self.w_q(x)
         k = self.w_k(x)
         v = self.w_v(x)
         A = torch.softmax(q @ k.transpose(-1, -2) / (self.head_dim**0.5), dim=-1)  # noqa: N806
-        y = self.w_o(A @ v)
+        h = A @ v
+        y = self.w_o(head_dim_mask * h)
         return y
 
 
@@ -93,6 +101,7 @@ class SingleHeadTransformerOneHotPositionalNoMLP(SaveableModule):
         """
         super().__init__()
         hidden_dim = vocab_size + 1 + max_seq_len
+        self.head_dim = head_dim
         self.hyperparameters.update(
             {
                 "vocab_size": vocab_size,
@@ -109,15 +118,22 @@ class SingleHeadTransformerOneHotPositionalNoMLP(SaveableModule):
         self.attention_head = AttentionHead(head_dim, hidden_dim)
         self.unembedding = nn.Linear(hidden_dim, vocab_size + 1, bias=False)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self, x: torch.Tensor, head_dim_mask: torch.Tensor | None = None
+    ) -> torch.Tensor:
         """Perform the forward pass of the transformer model.
 
         Args:
             x (torch.Tensor): Input tensor of shape (batch_size, seq_length, input_dim).
+            head_dim_mask (torch.Tensor): Mask for each head dimension (in each head). 1 means active. Integer Tensor of shape (head_dim,).
 
         Returns:
             torch.Tensor: Output tensor of shape (batch_size, seq_length, input_dim).
         """
+        if head_dim_mask is None:
+            head_dim_mask = torch.ones(
+                (self.head_dim,), dtype=torch.int, device=x.device
+            )
         x = torch.cat(
             [torch.ones(x.shape[0], 1, dtype=torch.long, device=x.device) * 2, x], dim=1
         )
@@ -130,7 +146,7 @@ class SingleHeadTransformerOneHotPositionalNoMLP(SaveableModule):
             ],
             dim=-1,
         )
-        y = self.attention_head(y) + y
+        y = self.attention_head(y, head_dim_mask=head_dim_mask) + y
         y = self.unembedding(y[:, 0, :])
         return y
 

@@ -20,6 +20,12 @@ bulk_train:
 	--num_epochs 200 --model_save_path results/bulk_models.csv --train_frac 0.5 --num_components 4 --comp_p 0.3 \
 	--num_trials_per_function 5 --num_functions 20 --init_random_seed 0 --low_reject_threshold 0.3 --high_reject_threshold 0.7
 
+bulk_train_dry_run:
+	uv run python train_bulk.py --device cpu --lr 0.01 --wd 0 --dataset_size 150 --func_width 5 \
+	--head_dim 3 --num_heads 1 --event_csv_save_path results_dry_run/bulk_events.csv --metadata_csv_save_path results_dry_run/bulk_metadata.csv \
+	--num_epochs 20 --model_save_path results_dry_run/bulk_models.csv --train_frac 0.5 --num_components 4 --comp_p 0.3 \
+	--num_trials_per_function 1 --num_functions 5 --init_random_seed 0 --low_reject_threshold 0.3 --high_reject_threshold 0.7
+
 streamlit:
 	uv run streamlit run streamlit_vis.py
 

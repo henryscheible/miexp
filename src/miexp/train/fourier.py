@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader
 from miexp.bfuncs import MultiComponentSpectrumDataset
 from miexp.models.interptransformer import SingleHeadTransformerOneHotPositionalNoMLP
 from miexp.train.train_util import eval_epoch, train_epoch
+from miexp.util.lambda_model import LambdaModel
 from miexp.util.metrics import binary_accuracy
 
 
@@ -159,6 +160,31 @@ def train_transformer_fourier(args: FourierTrainingConfiguration) -> OutputData:
                 single_eval_results["probabilities"],
                 single_eval_results["correct_outputs"],
             )
+        head_total_mask = torch.eye(
+            args.head_dim, dtype=torch.int, device=torch.device(args.device)
+        )
+        for j in range(args.head_dim):
+            single_head_model = LambdaModel(
+                lambda input: model(input, head_dim_mask=head_total_mask[j, :])
+            )
+            eval_results = eval_epoch(
+                single_head_model, eval_dataloader, torch.device(args.device)
+            )
+            eval_acc = (
+                torch.argmax(eval_results["probabilities"], dim=1)
+                == eval_results["correct_outputs"]
+            )
+            cur_results[f"eval_acc/head_{j}"] = eval_acc.float().mean().item()
+            for i, (coef, ds) in enumerate(single_comp_datasets.items()):
+                single_eval_results = eval_epoch(
+                    single_head_model,
+                    DataLoader(ds, batch_size=256, shuffle=False),
+                    torch.device(args.device),
+                )
+                cur_results[f"eval_acc_{i}/head_{j}"] = binary_accuracy(
+                    single_eval_results["probabilities"],
+                    single_eval_results["correct_outputs"],
+                )
         cur_results["lr"] = scheduler.get_last_lr()[0]
         results.append(cur_results)
         scheduler.step(cur_results["loss"])  # type: ignore

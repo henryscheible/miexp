@@ -31,5 +31,8 @@ jobs:
       - name: Check Fourier Training
         run: cd experiments/fourier_training && make train_dry_run
 
+      - name: Check Bulk Fourier Training
+        run: cd experiments/fourier_training && make bulk_train_dry_run
+      
       - name: Check Fourier Training Streamlit
         run: cd experiments/fourier_training && make check_streamlit
