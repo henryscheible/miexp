@@ -14,7 +14,7 @@ type-check:
 	uv run pyright
 
 test:
-	uv run pytest
+	uv run pytest tests/
 
 test-with-coverage:
-	uv run pytest --cov-report term --cov src
+	uv run pytest --cov-report term --cov src tests/
