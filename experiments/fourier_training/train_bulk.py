@@ -1,4 +1,5 @@
 import uuid
+from itertools import product
 
 import pandas as pd
 import torch
@@ -44,6 +45,13 @@ if __name__ == "__main__":
                 "train_acc",
                 "eval_acc",
                 *[f"eval_acc_{i}" for i in range(args.num_components)],
+                *[f"eval_acc/head_{j}" for j in range(args.head_dim)],
+                *[
+                    f"eval_acc_{i}/head_{j}"
+                    for i, j in product(
+                        range(args.num_components), range(args.head_dim)
+                    )
+                ],
             ]
         )
     )
