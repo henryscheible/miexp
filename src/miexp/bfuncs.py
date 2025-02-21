@@ -1,6 +1,47 @@
 import torch
+from scipy.linalg import hadamard
 from torch import Tensor
 from torch.utils.data import Dataset
+
+
+def random_boolean_function(N: int) -> tuple[Tensor, Tensor]:  # noqa: N803
+    """Generate a the coefficients of a random boolean function.
+
+    Args:
+        N (int): Size of the input boolean string.
+
+    Returns:
+        Tensor: A random boolean function.
+    """
+    truth_table = torch.randint(0, 2, (2**N,))
+    truth_table = 2 * truth_table - 1
+
+    had = torch.tensor(hadamard(2**N))
+    coeffs = (had @ truth_table) / 2**N
+    indices = torch.arange(2**N, dtype=torch.int32)
+    comps = ((indices[:, None] >> torch.arange(N - 1, -1, -1)) & 1).to(torch.float32)
+    return (coeffs, comps)
+
+
+def low_width_dataset(N: int, max_width: int, num_samples: int = 10000) -> Dataset:  # noqa: N803
+    """Generate a dataset with a low degree boolean function.
+
+    Args:
+        N (int): Size of the input boolean string.
+        max_width (int): Maximum number of Fourier components in the functions.
+        num_samples (int, optional): Size of the dataset. Defaults to 10000.
+
+    Returns:
+        Dataset: A dataset for the low degree boolean function.
+    """
+    while True:
+        coeffs, comps = random_boolean_function(N)
+        if torch.count_nonzero(coeffs) <= max_width:
+            break
+    coeffs, comps = random_boolean_function(N)
+    dataset = MultiComponentSpectrumDataset(N, coeffs, comps, num_samples)
+
+    return dataset
 
 
 class MajDataset(Dataset):
@@ -151,3 +192,6 @@ class MultiComponentSpectrumDataset(Dataset):
             float: The mean value of the labels, representing the percentage of positive labels.
         """
         return self.labels.type(torch.float).mean().item()
+
+
+low_width_dataset(6, 5, 10000)
