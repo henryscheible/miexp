@@ -1,9 +1,12 @@
 import json
+from typing import Any
 
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 import torch
+
+from miexp.models.btransformer import SaveableModule
 
 st.title("Fourier Component Training Results")
 
@@ -14,28 +17,46 @@ def get_metadata_df() -> pd.DataFrame:
     return pd.read_csv("../../data/results_2_23_25/bulk_metadata.csv")
 
 
+@st.cache_data()
 def get_events_df() -> pd.DataFrame:
     return pd.read_csv("../../data/results_2_23_25/bulk_events.csv", index_col=0)
 
 
+@st.cache_data()
+def get_model_dict() -> dict[str, dict[str, Any]]:
+    return torch.load("../../data/results_2_23_25/bulk_models.pt", map_location="cpu")
+
+
+@st.cache_data()
+def load_specific_model(
+    _bulk_models_dict: dict[str, dict[str, Any]], uuid: str
+) -> SaveableModule:
+    return SaveableModule.load_from_dict(
+        _bulk_models_dict[uuid], map_device=torch.device("cpu")
+    )
+
+
 metadata_df = get_metadata_df()
 events_df = get_events_df()
+bulk_model_dict = get_model_dict()
 
 head_dims = len(list(filter(lambda string: "eval_acc/" in string, events_df.columns)))
 
 # Display the dataframe
 st.write("Training Runs: (SELECT ONE)")
 
+shown_df = metadata_df.sort_values(by="max_eval_acc", ascending=False).drop_duplicates(
+    ["function_uuid"]
+)
+
 selection = st.dataframe(
-    metadata_df.sort_values(by="max_eval_acc", ascending=False).drop_duplicates(
-        ["function_uuid"]
-    ),
+    shown_df,
     selection_mode="single-row",
     on_select="rerun",
 )
 if len(selection["selection"]["rows"]) > 0:  # type: ignore
     row = selection["selection"]["rows"][0]  # type: ignore
-    uuid = metadata_df.loc[selection["selection"]["rows"], "run_uuid"].item()  # type: ignore
+    uuid = shown_df.iloc[selection["selection"]["rows"]]["run_uuid"].item()  # type: ignore
     st.write(uuid)
 
     st.dataframe(events_df.loc[events_df["uuid"] == uuid])
@@ -83,7 +104,6 @@ if len(selection["selection"]["rows"]) > 0:  # type: ignore
                 x="epoch",
                 y=[
                     "loss",
-                    "train_acc",
                     f"eval_acc/head_{dim}",
                     f"eval_acc_0/head_{dim}",
                     f"eval_acc_1/head_{dim}",
@@ -92,3 +112,6 @@ if len(selection["selection"]["rows"]) > 0:  # type: ignore
                 ],
             )
         )
+    st.write(bulk_model_dict)
+    model = load_specific_model(bulk_model_dict, uuid)
+    st.write(model)
