@@ -3,6 +3,7 @@ from itertools import product
 
 import pandas as pd
 import torch
+import yaml
 from pydantic import BaseModel
 from tqdm import tqdm
 
@@ -21,6 +22,7 @@ class BulkConfiguration(BaseModel):
     num_heads: int
     event_csv_save_path: str
     metadata_csv_save_path: str
+    bulk_conf_save_path: str
     num_epochs: int
     model_save_path: str
     train_frac: float
@@ -35,6 +37,8 @@ class BulkConfiguration(BaseModel):
 
 if __name__ == "__main__":
     args = parse_args_from_conf(BulkConfiguration)
+    with open(args.bulk_conf_save_path, "w") as f:
+        yaml.dump(args.model_dump(), f)
     torch.manual_seed(args.init_random_seed)
     events_table = pd.DataFrame(
         columns=pd.Series(
