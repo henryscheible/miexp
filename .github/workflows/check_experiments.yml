@@ -35,4 +35,4 @@ jobs:
         run: cd experiments/fourier_training && make bulk_train_dry_run
       
       - name: Check Fourier Training Streamlit
-        run: cd experiments/fourier_training && make check_streamlit
+        run: cd apps/fourier_transformer_viewer && make check_streamlit
