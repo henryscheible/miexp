@@ -11,15 +11,17 @@ st.title("Fourier Component Training Results")
 # Read the CSV file
 @st.cache_data()
 def get_metadata_df() -> pd.DataFrame:
-    return pd.read_csv("../../data/results_2_23_25/bulk_metadata.csv")
+    return pd.read_csv("results/bulk_metadata.csv")
 
 
 def get_events_df() -> pd.DataFrame:
-    return pd.read_csv("../../data/results_2_23_25/bulk_events.csv", index_col=0)
+    return pd.read_csv("results/bulk_events.csv", index_col=0)
 
 
 metadata_df = get_metadata_df()
 events_df = get_events_df()
+
+head_dims = len(list(filter(lambda string: "eval_acc/" in string, events_df.columns)))
 
 # Display the dataframe
 st.write("Training Runs: (SELECT ONE)")
@@ -50,18 +52,43 @@ if len(selection["selection"]["rows"]) > 0:  # type: ignore
 
     st.header("Model Performance")
 
-    st.plotly_chart(
-        px.line(
-            events_df.loc[events_df["uuid"] == uuid],
-            x="epoch",
-            y=[
-                "loss",
-                "train_acc",
-                "eval_acc",
-                "eval_acc_0",
-                "eval_acc_1",
-                "eval_acc_2",
-                "eval_acc_3",
-            ],
+    head_dim_selection: str = st.segmented_control(
+        "Attention Head Dimensions",
+        ["All Dims", *[f"Head Dim {i}" for i in range(head_dims)]],
+        default="All Dims",
+        selection_mode="single",
+    )  # type: ignore
+
+    if head_dim_selection == "All Dims":
+        st.plotly_chart(
+            px.line(
+                events_df.loc[events_df["uuid"] == uuid],
+                x="epoch",
+                y=[
+                    "loss",
+                    "train_acc",
+                    "eval_acc",
+                    "eval_acc_0",
+                    "eval_acc_1",
+                    "eval_acc_2",
+                    "eval_acc_3",
+                ],
+            )
         )
-    )
+    else:
+        dim = int(head_dim_selection.split("Head Dim ")[1])
+        st.plotly_chart(
+            px.line(
+                events_df.loc[events_df["uuid"] == uuid],
+                x="epoch",
+                y=[
+                    "loss",
+                    "train_acc",
+                    f"eval_acc/head_{dim}",
+                    f"eval_acc_0/head_{dim}",
+                    f"eval_acc_1/head_{dim}",
+                    f"eval_acc_2/head_{dim}",
+                    f"eval_acc_3/head_{dim}",
+                ],
+            )
+        )
