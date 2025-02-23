@@ -24,7 +24,7 @@ def get_events_df() -> pd.DataFrame:
 
 @st.cache_data()
 def get_model_dict() -> dict[str, dict[str, Any]]:
-    return torch.load("../../data/results_2_23_25/bulk_models.csv", map_location="cpu")
+    return torch.load("../../data/results_2_23_25/bulk_models.pt", map_location="cpu")
 
 
 @st.cache_data()
