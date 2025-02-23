@@ -1,5 +1,6 @@
 import uuid
 from itertools import product
+from typing import Any
 
 import pandas as pd
 import torch
@@ -74,7 +75,7 @@ if __name__ == "__main__":
         )
     )
 
-    model_objs = {}
+    model_objs: dict[str, list[dict[str, Any]]] = {}
 
     for func_index in range(args.num_functions):
         frac = 0
@@ -108,7 +109,7 @@ if __name__ == "__main__":
 
     for i in tqdm(range(len(metadata_table))):
         metadata = metadata_table.iloc[i]
-        run_uuid = metadata_table.index[i]
+        run_uuid: str = metadata_table.index[i]  # type: ignore
         output = train_transformer_fourier(
             FourierTrainingConfiguration(
                 device=args.device,
@@ -143,7 +144,7 @@ if __name__ == "__main__":
             )
         else:
             events_table = small_events_table
-        model_objs["uuid"] = model_obj
+        model_objs[run_uuid] = model_obj
         torch.save(model_objs, args.model_save_path)
         events_table.to_csv(args.event_csv_save_path)
         metadata_table.to_csv(args.metadata_csv_save_path)
