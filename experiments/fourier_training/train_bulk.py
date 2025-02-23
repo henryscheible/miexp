@@ -109,7 +109,7 @@ if __name__ == "__main__":
 
     for i in tqdm(range(len(metadata_table))):
         metadata = metadata_table.iloc[i]
-        run_uuid: str = metadata_table.index[i]  # type: ignore
+        run_uuid: str = str(metadata_table.index[i])  # type: ignore
         output = train_transformer_fourier(
             FourierTrainingConfiguration(
                 device=args.device,
