@@ -11,11 +11,11 @@ st.title("Fourier Component Training Results")
 # Read the CSV file
 @st.cache_data()
 def get_metadata_df() -> pd.DataFrame:
-    return pd.read_csv("results/bulk_metadata.csv")
+    return pd.read_csv("../../data/results_2_23_25/bulk_metadata.csv")
 
 
 def get_events_df() -> pd.DataFrame:
-    return pd.read_csv("results/bulk_events.csv", index_col=0)
+    return pd.read_csv("../../data/results_2_23_25/bulk_events.csv", index_col=0)
 
 
 metadata_df = get_metadata_df()
