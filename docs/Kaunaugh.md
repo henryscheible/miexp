@@ -1,0 +1,5 @@
+
+# Karnaugh Maps
+
+A Karnaugh map is a visual tool to help simplify writing down boolean functions by identifying patterns within them. Generally, if you have a truth table with $n$ values set to $1$, you can write it as a DNF with $n$ terms trivially, however this is not the most efficient. The idea of Karnaugh Map is to help factorize this into a better representation. The idea starts by visually depicting the Truth Table in a 2D chart (put all combinations for half your variables on each axis), and identify large rectangles/squares of $1$s, simplifying each rectangle/square into $1$ term in the DNF. While super-useful and interesting for optimization purposes, it does not achieve for us anything beyond what considering functions with low "CNF/DNF complexity" would achieve -- i.e. there is no idea of "low Karnaugh complexity" for us to leverage. I perhaps see a use-case where we can distinguish between DNFs with a few number of terms and filter out the ones that are too easy to learn (i.e. each term in the DNF only corresponds to a small number of $1$s in the Truth Table).
+
