@@ -161,7 +161,7 @@ class MultiComponentDNFDataset(Dataset):
 
         Args:
             N (int): Size of the input boolean string
-            comps (Tensor): The DNF components (boolean valued) (Shape: (num_components, N))
+            comps (Tensor): The DNF components (ternary valued, 0 indicating not included) (Shape: (num_components, N))
             num_samples (int, optional): Size of the dataset. Defaults to 10000.
         """
         assert comps.shape[1] == N, (
