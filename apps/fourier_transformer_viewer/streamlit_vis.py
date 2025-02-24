@@ -13,6 +13,9 @@ from torch import Tensor
 
 from miexp.models.interptransformer import SingleHeadTransformerOneHotPositionalNoMLP
 
+torch.classes.__path__ = []
+
+
 st.title("Fourier Component Training Results")
 
 
@@ -33,17 +36,24 @@ def visualize_state_dict_at_epoch(
     fig = make_subplots(
         rows=num_matrices // 3 + 1, cols=3, subplot_titles=list(state_dict.keys())
     )
+    min_val = min([torch.min(mat).item() for mat in state_dict.values()])
+    max_val = max([torch.max(mat).item() for mat in state_dict.values()])
 
     for epoch in range(0, num_epochs, 5):
         for i, (name, matrix) in enumerate(state_dict.items()):
             trace = go.Heatmap(
-                z=matrix[epoch, :, :].cpu().numpy(), coloraxis="coloraxis"
+                z=matrix[epoch, :, :].cpu().numpy(),
+                coloraxis="coloraxis",
             )
             trace.name = f"{epoch}/{name}"
             trace.showlegend = True
             fig.add_trace(trace, row=(i // 3) + 1, col=(i % 3) + 1)
 
     # Make first epoch trace visible
+
+    for i in range(len(fig.data)):  # type: ignore
+        fig.data[i].visible = False  # type: ignore
+
     for i in range(len(state_dict)):
         fig.data[i].visible = True  # type: ignore
 
@@ -78,6 +88,8 @@ def visualize_state_dict_at_epoch(
     fig.update_layout(
         height=300 * num_matrices / 3,  # Adjust height based on the number of matrices
         coloraxis={"colorscale": "Viridis"},
+        coloraxis_cmin=min_val,
+        coloraxis_cmax=max_val,
         showlegend=False,
     )
     fig.update_traces(texttemplate="%{z:.2f}", showlegend=True)
