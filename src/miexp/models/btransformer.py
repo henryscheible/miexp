@@ -32,7 +32,7 @@ class SaveableModule(nn.Module):
         Returns:
             dict: Save dict for the model
         """
-        state_dict = self.state_dict()
+        state_dict = copy.deepcopy(self.state_dict())
         return {"hyperparameters": self.hyperparameters, "state_dict": state_dict}
 
     @classmethod
