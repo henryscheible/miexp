@@ -20,7 +20,7 @@ def test_visualize_state_dict_at_epoch(sample_state_dict):
 
     assert isinstance(fig, Figure)
     assert (
-        len(fig.data) == len(sample_state_dict) + 2  # type: ignore
-    )  # Original matrices + Effective QKV + Effective QKVO
+        len(fig.data) == len(sample_state_dict) * 3  # type: ignore
+    )  # Original matrices * number of epochs
     assert fig.layout.height == 300 * len(sample_state_dict) / 3  # type: ignore
     assert not fig.layout.showlegend  # type: ignore
