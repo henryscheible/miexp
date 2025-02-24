@@ -20,7 +20,7 @@ class SaveableModule(nn.Module):
         Args:
             checkpoint_path (str): Path to save model to
         """
-        state_dict = self.state_dict()
+        state_dict = copy.deepcopy(self.state_dict())
         torch.save(
             {"hyperparameters": self.hyperparameters, "state_dict": state_dict},
             checkpoint_path,

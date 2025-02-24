@@ -1,7 +1,7 @@
 bulk_conf_save_path: results/bulk_conf.yaml
 comp_p: 0.3
 dataset_size: 1000
-device: mps
+device: cuda
 event_csv_save_path: results/bulk_events.csv
 func_width: 10
 head_dim: 3
