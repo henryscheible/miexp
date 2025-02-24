@@ -34,19 +34,19 @@ class FourierTrainingConfiguration(BaseModel):
         comps (list[list[int]] | None): The list of component masks for each fourier component, if any.
     """
 
-    device: str
-    lr: float
-    wd: float
-    dataset_size: int
-    func_width: int
-    head_dim: int
-    num_heads: int
-    num_epochs: int
+    device: str = "cpu"
+    lr: float = 0.01
+    wd: float = 0
+    dataset_size: int = 1000
+    func_width: int = 10
+    head_dim: int = 3
+    num_heads: int = 1
+    num_epochs: int = 10
     dataset_save_path: str | None = None
     csv_save_path: str | None = None
     model_save_path: str | None = None
-    train_frac: float
-    random_seed: int
+    train_frac: float = 0.5
+    random_seed: int = 0
     coeffs: list[float] | None = None
     comps: list[list[int]] | None = None
 
