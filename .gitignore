@@ -163,3 +163,4 @@ cython_debug/
 
 *.ckpt
 *.DS_Store
+experiments/fourier_training/results/**
