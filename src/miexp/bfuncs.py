@@ -172,6 +172,7 @@ class MultiComponentDNFDataset(Dataset):
         self.N = N
         self.num_samples = num_samples
         self.data = torch.randint(0, 2, (self.num_samples, self.N)).type(torch.int)
+        comps = comps.to(torch.int)
         self.labels = self.generate_labels(self.data, comps).type(torch.int)
 
     def __len__(self) -> int:  # noqa: D105
@@ -192,6 +193,16 @@ class MultiComponentDNFDataset(Dataset):
         Returns:
             Tensor: Labels for the data.
         """
-        labels = torch.sum((data @ comps.T) % 2, dim=1) > 0
+        labels = torch.any(
+            (2 * data - 1) @ comps.T == comps.count_nonzero(dim=1), dim=1
+        )
 
         return labels
+
+    def get_percent_positive(self) -> float:
+        """Calculate the percentage of positive labels.
+
+        Returns:
+            float: The mean value of the labels, representing the percentage of positive labels.
+        """
+        return self.labels.type(torch.float).mean().item()
