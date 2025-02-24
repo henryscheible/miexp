@@ -34,6 +34,7 @@ class BulkConfiguration(BaseModel):
     init_random_seed: int = 0
     low_reject_threshold: float = 0.4
     high_reject_threshold: float = 0.6
+    num_procs: int = 10
 
 
 def process_ith_entry(
@@ -140,7 +141,7 @@ if __name__ == "__main__":
 
     metadata_table = metadata_table.set_index("run_uuid")
 
-    with multiprocessing.Pool(5) as p:
+    with multiprocessing.Pool(args.num_procs) as p:
         res = p.starmap(
             process_ith_entry,
             zip(
