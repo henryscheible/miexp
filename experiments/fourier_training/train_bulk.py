@@ -1,8 +1,10 @@
 import uuid
 from itertools import product
+from typing import Any
 
 import pandas as pd
 import torch
+import yaml
 from pydantic import BaseModel
 from tqdm import tqdm
 
@@ -12,29 +14,33 @@ from miexp.train.fourier import FourierTrainingConfiguration, train_transformer_
 
 
 class BulkConfiguration(BaseModel):
-    device: str
-    lr: float
-    wd: float
-    dataset_size: int
-    func_width: int
-    head_dim: int
-    num_heads: int
-    event_csv_save_path: str
-    metadata_csv_save_path: str
-    num_epochs: int
-    model_save_path: str
-    train_frac: float
-    num_components: int
-    num_functions: int
-    comp_p: float
-    num_trials_per_function: int
-    init_random_seed: int
-    low_reject_threshold: float
-    high_reject_threshold: float
+    device: str = "cpu"
+    lr: float = 0.01
+    wd: float = 0
+    dataset_size: int = 50
+    func_width: int = 10
+    head_dim: int = 3
+    num_heads: int = 1
+    event_csv_save_path: str | None = None
+    metadata_csv_save_path: str | None = None
+    bulk_conf_save_path: str | None = None
+    num_epochs: int = 1
+    model_save_path: str | None = None
+    train_frac: float = 0.5
+    num_components: int = 4
+    num_functions: int = 2
+    comp_p: float = 0.4
+    num_trials_per_function: int = 2
+    init_random_seed: int = 0
+    low_reject_threshold: float = 0.4
+    high_reject_threshold: float = 0.6
 
 
 if __name__ == "__main__":
     args = parse_args_from_conf(BulkConfiguration)
+    if args.bulk_conf_save_path is not None:
+        with open(args.bulk_conf_save_path, "w") as f:
+            yaml.dump(args.model_dump(), f)
     torch.manual_seed(args.init_random_seed)
     events_table = pd.DataFrame(
         columns=pd.Series(
@@ -70,7 +76,7 @@ if __name__ == "__main__":
         )
     )
 
-    model_objs = {}
+    model_objs: dict[str, list[dict[str, Any]]] = {}
 
     for func_index in range(args.num_functions):
         frac = 0
@@ -92,7 +98,7 @@ if __name__ == "__main__":
             comps = tensor_comps.tolist()  # type: ignore
             metadata_table.loc[len(metadata_table)] = pd.Series(
                 {
-                    "run_uuid": uuid.uuid4(),
+                    "run_uuid": str(uuid.uuid4()),
                     "function_uuid": func_uuid,
                     "coeffs": coeffs,
                     "comps": comps,
@@ -104,7 +110,7 @@ if __name__ == "__main__":
 
     for i in tqdm(range(len(metadata_table))):
         metadata = metadata_table.iloc[i]
-        run_uuid = metadata_table.index[i]
+        run_uuid: str = str(metadata_table.index[i])  # type: ignore
         output = train_transformer_fourier(
             FourierTrainingConfiguration(
                 device=args.device,
@@ -139,7 +145,10 @@ if __name__ == "__main__":
             )
         else:
             events_table = small_events_table
-        model_objs["uuid"] = model_obj
-        torch.save(model_objs, args.model_save_path)
-        events_table.to_csv(args.event_csv_save_path)
-        metadata_table.to_csv(args.metadata_csv_save_path)
+        model_objs[run_uuid] = model_obj
+        if args.model_save_path is not None:
+            torch.save(model_objs, args.model_save_path)
+        if args.event_csv_save_path is not None:
+            events_table.to_csv(args.event_csv_save_path)
+        if args.metadata_csv_save_path is not None:
+            metadata_table.to_csv(args.metadata_csv_save_path)
