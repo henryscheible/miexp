@@ -3,12 +3,86 @@ from typing import Any
 
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 import torch
+from plotly.graph_objs import Figure
+from plotly.subplots import make_subplots
+from pydantic import ConfigDict, TypeAdapter
+from torch import Tensor
 
-from miexp.models.btransformer import SaveableModule
+from miexp.models.interptransformer import SingleHeadTransformerOneHotPositionalNoMLP
 
 st.title("Fourier Component Training Results")
+
+
+def visualize_state_dict_at_epoch(
+    state_dict: dict[str, Tensor],
+) -> Figure:
+    """Visualizes the state dictionary at a given epoch by creating a subplot of heatmaps.
+
+    Parameters:
+        state_dict (dict[str, Tensor]): A dictionary where keys are matrix names and values are tensors representing the matrices.
+        epoch (int): The epoch number for which the visualization is being created.
+
+    Returns:
+        Figure: A Plotly Figure object containing the heatmaps of the matrices in the state dictionary, as well as the effective QKV and QKVO matrices.
+    """
+    num_epochs = next(iter(state_dict.values())).shape[0]
+    num_matrices = len(state_dict)
+    fig = make_subplots(
+        rows=num_matrices // 3 + 1, cols=3, subplot_titles=list(state_dict.keys())
+    )
+
+    for epoch in range(0, num_epochs, 5):
+        for i, (name, matrix) in enumerate(state_dict.items()):
+            trace = go.Heatmap(
+                z=matrix[epoch, :, :].cpu().numpy(), coloraxis="coloraxis"
+            )
+            trace.name = f"{epoch}/{name}"
+            trace.showlegend = True
+            fig.add_trace(trace, row=(i // 3) + 1, col=(i % 3) + 1)
+
+    # Make first epoch trace visible
+    for i in range(len(state_dict)):
+        fig.data[i].visible = True  # type: ignore
+
+    # Create and add slider
+    steps = []
+    for epoch in range(0, num_epochs, 5):
+        step = dict(
+            method="update",
+            args=[
+                {"visible": [False] * len(fig.data)},  # type: ignore
+                {"title": "Slider switched to step: " + str(epoch)},
+            ],  # layout attribute
+            label=epoch,
+        )
+        for i in range(
+            (epoch // 5) * len(state_dict), ((epoch // 5) + 1) * len(state_dict)
+        ):
+            step["args"][0]["visible"][i] = True  # type: ignore
+        steps.append(step)
+
+    sliders = [
+        dict(
+            active=0,
+            # currentvalue={"prefix": "Frequency: "},
+            # pad={"t": 50},
+            steps=steps,
+        )
+    ]
+
+    fig.update_layout(sliders=sliders)
+
+    fig.update_layout(
+        height=300 * num_matrices / 3,  # Adjust height based on the number of matrices
+        coloraxis={"colorscale": "Viridis"},
+        showlegend=False,
+    )
+    fig.update_traces(texttemplate="%{z:.2f}", showlegend=True)
+
+    return fig
 
 
 # Read the CSV file
@@ -23,17 +97,40 @@ def get_events_df() -> pd.DataFrame:
 
 
 @st.cache_data()
-def get_model_dict() -> dict[str, dict[str, Any]]:
+def get_model_dict() -> dict[str, list[dict[str, Any]]]:
     return torch.load("../../data/results_2_23_25/bulk_models.pt", map_location="cpu")
 
 
 @st.cache_data()
-def load_specific_model(
-    _bulk_models_dict: dict[str, dict[str, Any]], uuid: str
-) -> SaveableModule:
-    return SaveableModule.load_from_dict(
-        _bulk_models_dict[uuid], map_device=torch.device("cpu")
+def get_state_dict_type_adapter() -> TypeAdapter:
+    return TypeAdapter(
+        list[dict[str, torch.Tensor]],
+        config=ConfigDict(arbitrary_types_allowed=True),
     )
+
+
+@st.cache_data()
+def load_specific_models(
+    _bulk_models_dict: dict[str, list[dict[str, Any]]], uuid: str
+) -> dict[str, torch.Tensor]:
+    specific_model_params: list[dict[str, torch.Tensor]] = [
+        SingleHeadTransformerOneHotPositionalNoMLP.load_from_dict(
+            model_dict, map_device=torch.device("cpu")
+        ).state_dict()
+        for model_dict in _bulk_models_dict[uuid]
+    ]
+    specific_model_params = get_state_dict_type_adapter().validate_python(
+        specific_model_params
+    )
+    return {
+        name: torch.stack(
+            [
+                specific_model_param[name]
+                for specific_model_param in specific_model_params
+            ]
+        )
+        for name in specific_model_params[0].keys()
+    }
 
 
 metadata_df = get_metadata_df()
@@ -112,6 +209,6 @@ if len(selection["selection"]["rows"]) > 0:  # type: ignore
                 ],
             )
         )
-    st.write(bulk_model_dict)
-    model = load_specific_model(bulk_model_dict, uuid)
-    st.write(model)
+    state_dict = load_specific_models(bulk_model_dict, uuid)
+
+    st.plotly_chart(visualize_state_dict_at_epoch(state_dict))
