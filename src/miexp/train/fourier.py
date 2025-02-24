@@ -1,3 +1,5 @@
+from typing import Any
+
 import pandas as pd
 import torch
 from pydantic import BaseModel, ConfigDict
@@ -60,7 +62,7 @@ class OutputData(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
     events_log: pd.DataFrame
-    params_dict: dict
+    params_dict: list[dict[str, Any]]
     ds_positive_frac: float
 
 
@@ -137,6 +139,7 @@ def train_transformer_fourier(args: FourierTrainingConfiguration) -> OutputData:
     scheduler = ReduceLROnPlateau(optimizer, "min", factor=0.5, patience=10)
 
     results = []
+    model_dicts = []
     for epoch in range(args.num_epochs):
         cur_results: dict[str, float | None] = {}
         cur_results.update(
@@ -188,6 +191,7 @@ def train_transformer_fourier(args: FourierTrainingConfiguration) -> OutputData:
         cur_results["lr"] = scheduler.get_last_lr()[0]
         results.append(cur_results)
         scheduler.step(cur_results["loss"])  # type: ignore
+        model_dicts.append(model.get_save_dict())
 
     if args.dataset_save_path is not None:
         torch.save({"train": train_data, "eval": eval_data}, args.dataset_save_path)
@@ -198,6 +202,6 @@ def train_transformer_fourier(args: FourierTrainingConfiguration) -> OutputData:
 
     return OutputData(
         events_log=pd.DataFrame.from_records(results).reset_index(names="epoch"),
-        params_dict=model.get_save_dict(),
+        params_dict=model_dicts,
         ds_positive_frac=dataset.get_percent_positive(),
     )
