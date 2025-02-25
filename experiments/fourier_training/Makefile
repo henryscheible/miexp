@@ -7,7 +7,7 @@ train:
 	--func_width 10 --head_dim 3 --num_heads 1 --csv_save_path ./results.csv --model_save_path ./model.pth \
 	--dataset_save_path ./dataset.pt --num_epochs 150 --train_frac 0.6 --random_seed 0
 
-test: train_dry_run bulk_train_dry_run bulk_train_parallel_dry_run
+test: train_dry_run bulk_train_dry_run
 
 visualize:
 	uv run python create_visualizations.py 
