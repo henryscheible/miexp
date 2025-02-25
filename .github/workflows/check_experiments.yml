@@ -32,7 +32,7 @@ jobs:
         run: cd experiments/double_majority_training && make train_dry_run
 
       - name: Check Fourier Training
-        run: cd experiments/fourier_training && make test
+        run: cd experiments/fourier_training && mkdir results && make test
       
       - name: Check Fourier Training Streamlit
         run: cd apps/fourier_transformer_viewer && make check_streamlit
