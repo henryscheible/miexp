@@ -1,4 +1,5 @@
 import json
+import os
 from typing import Any
 
 import pandas as pd
@@ -99,18 +100,18 @@ def visualize_state_dict_at_epoch(
 
 # Read the CSV file
 @st.cache_data()
-def get_metadata_df() -> pd.DataFrame:
-    return pd.read_csv("../../data/results_2_23_25/bulk_metadata.csv")
+def get_metadata_df(results_dir: str) -> pd.DataFrame:
+    return pd.read_csv(f"../../data/{results_dir}/bulk_metadata.csv")
 
 
 @st.cache_data()
-def get_events_df() -> pd.DataFrame:
-    return pd.read_csv("../../data/results_2_23_25/bulk_events.csv", index_col=0)
+def get_events_df(results_dir: str) -> pd.DataFrame:
+    return pd.read_csv(f"../../data/{results_dir}/bulk_events.csv", index_col=0)
 
 
 @st.cache_data()
-def get_model_dict() -> dict[str, list[dict[str, Any]]]:
-    return torch.load("../../data/results_2_23_25/bulk_models.pt", map_location="cpu")
+def get_model_dict(results_dir: str) -> dict[str, list[dict[str, Any]]]:
+    return torch.load(f"../../data/{results_dir}/bulk_models.pt", map_location="cpu")
 
 
 @st.cache_data()
@@ -121,7 +122,7 @@ def get_state_dict_type_adapter() -> TypeAdapter:
     )
 
 
-@st.cache_data()
+@st.cache_data(show_spinner=True)
 def load_specific_models(
     _bulk_models_dict: dict[str, list[dict[str, Any]]], uuid: str
 ) -> dict[str, torch.Tensor]:
@@ -145,9 +146,21 @@ def load_specific_models(
     }
 
 
-metadata_df = get_metadata_df()
-events_df = get_events_df()
-bulk_model_dict = get_model_dict()
+@st.cache_data()
+def get_data_dir_list() -> list[str]:
+    return [
+        name
+        for name in os.listdir("../../data/")
+        if os.path.isdir(os.path.join("../../data/", name))
+    ]
+
+
+dirlist = get_data_dir_list()
+dir = st.selectbox("Data Directory", dirlist)
+
+metadata_df = get_metadata_df(dir)
+events_df = get_events_df(dir)
+bulk_model_dict = get_model_dict(dir)
 
 head_dims = len(list(filter(lambda string: "eval_acc/" in string, events_df.columns)))
 
