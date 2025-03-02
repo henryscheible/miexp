@@ -180,14 +180,14 @@ if len(selection["selection"]["rows"]) > 0:  # type: ignore
         )
     )
 
-    st.header("Model Performance")
+    st.subheader("Model Performance")
 
-    head_dim_selection: str = st.segmented_control(
+    head_dim_selection: str | None = st.segmented_control(
         "Attention Head Dimensions",
         ["All Dims", *[f"Head Dim {i}" for i in range(head_dims)]],
         default="All Dims",
         selection_mode="single",
-    )  # type: ignore
+    )
 
     if head_dim_selection == "All Dims":
         st.plotly_chart(
@@ -205,6 +205,8 @@ if len(selection["selection"]["rows"]) > 0:  # type: ignore
                 ],
             )
         )
+    elif head_dim_selection is None:
+        st.write("Must select a head dimension group!")
     else:
         dim = int(head_dim_selection.split("Head Dim ")[1])
         st.plotly_chart(
@@ -221,6 +223,8 @@ if len(selection["selection"]["rows"]) > 0:  # type: ignore
                 ],
             )
         )
+
+    st.subheader("Model Weights")
     state_dict = load_specific_models(bulk_model_dict, uuid)
 
     st.plotly_chart(visualize_state_dict_at_epoch(state_dict))
