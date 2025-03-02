@@ -38,4 +38,4 @@ jobs:
         run: cd apps/fourier_transformer_viewer && make check_streamlit
 
       - name: Check that dataset README is generated
-        run: cd data && mv README.md README_comp.md && make && cmp README.md README_comp.md
+        run: cd data && mv README.md README_comp.md && make && diff README.md README_comp.md
