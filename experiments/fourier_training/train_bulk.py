@@ -14,6 +14,7 @@ from miexp.train.fourier import FourierTrainingConfiguration, train_transformer_
 
 
 class BulkConfiguration(BaseModel):
+    training_type: str = "BulkFourierTraining"
     device: str = "cpu"
     lr: float = 0.01
     wd: float = 0

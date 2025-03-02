@@ -1,3 +1,4 @@
+training_type: BulkFourierTraining
 bulk_conf_save_path: results/bulk_conf.yaml
 comp_p: 0.3
 dataset_size: 1000

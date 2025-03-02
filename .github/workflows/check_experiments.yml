@@ -36,3 +36,6 @@ jobs:
       
       - name: Check Fourier Training Streamlit
         run: cd apps/fourier_transformer_viewer && make check_streamlit
+
+      - name: Check that dataset README is generated
+        run: cd data && mv README.md README_comp.md && make &&  cmp -s README.md README_comp.md

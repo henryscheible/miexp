@@ -11,11 +11,15 @@ dependencies = [
     "plotly>=5.24.1",
     "pydantic>=2.10.3",
     "streamlit==1.41.0",
+    "tabulate>=0.9.0",
     "torch>=2.5.1",
     "torchviz>=0.0.3",
     "tqdm>=4.67.1",
     "watchdog>=6.0.0",
 ]
+
+[project.scripts]
+generate_dataset_summary = "miexp.util.data:generate_data_summary"
 
 [dependency-groups]
 dev = [
