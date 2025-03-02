@@ -33,6 +33,7 @@ def generate_data_summary() -> None:
 
     # Convert the dictionary to a pandas DataFrame
     data_summary_df = pd.DataFrame.from_dict(data_summary, orient="index")
+    data_summary_df = data_summary_df.sort_index()
 
     # Convert the DataFrame to a markdown string using tabulate
     markdown_string = tabulate(data_summary_df, headers="keys", tablefmt="pipe")  # type: ignore
