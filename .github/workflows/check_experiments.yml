@@ -32,10 +32,10 @@ jobs:
         run: cd experiments/double_majority_training && make train_dry_run
 
       - name: Check Fourier Training
-        run: cd experiments/fourier_training && make train_dry_run
-
-      - name: Check Bulk Fourier Training
-        run: cd experiments/fourier_training && mkdir results_dry_run && make bulk_train_dry_run
+        run: cd experiments/fourier_training && mkdir results && make test
       
       - name: Check Fourier Training Streamlit
         run: cd apps/fourier_transformer_viewer && make check_streamlit
+
+      - name: Check that dataset README is generated
+        run: cd data && mv README.md README_comp.md && make && diff README.md README_comp.md

@@ -14,8 +14,8 @@ metadata_csv_save_path: results/bulk_metadata.csv
 model_save_path: results/bulk_models.pt
 num_components: 4
 num_epochs: 200
-num_functions: 2
+num_functions: 100
 num_heads: 1
-num_trials_per_function: 2
+num_trials_per_function: 4
 train_frac: 0.5
 wd: 0.0

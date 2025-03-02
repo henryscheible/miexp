@@ -1,12 +1,13 @@
+import multiprocessing
 import uuid
-from itertools import product
+from itertools import product, repeat
+from time import time
 from typing import Any
 
 import pandas as pd
 import torch
 import yaml
 from pydantic import BaseModel
-from tqdm import tqdm
 
 from miexp.bfuncs import MultiComponentSpectrumDataset
 from miexp.script_util import parse_args_from_conf
@@ -14,7 +15,6 @@ from miexp.train.fourier import FourierTrainingConfiguration, train_transformer_
 
 
 class BulkConfiguration(BaseModel):
-    training_type: str = "BulkFourierTraining"
     device: str = "cpu"
     lr: float = 0.01
     wd: float = 0
@@ -22,11 +22,11 @@ class BulkConfiguration(BaseModel):
     func_width: int = 10
     head_dim: int = 3
     num_heads: int = 1
-    event_csv_save_path: str | None = None
-    metadata_csv_save_path: str | None = None
-    bulk_conf_save_path: str | None = None
+    event_csv_save_path: str | None = "results/events.csv"
+    metadata_csv_save_path: str | None = "results/metadata.csv"
+    bulk_conf_save_path: str | None = "results/conf_save.yaml"
     num_epochs: int = 1
-    model_save_path: str | None = None
+    model_save_path: str | None = "results/model_save.pt"
     train_frac: float = 0.5
     num_components: int = 4
     num_functions: int = 2
@@ -35,6 +35,40 @@ class BulkConfiguration(BaseModel):
     init_random_seed: int = 0
     low_reject_threshold: float = 0.4
     high_reject_threshold: float = 0.6
+    num_procs: int = 10
+
+
+def process_ith_entry(
+    i: int, metadata: pd.Series, run_uuid: str, args: BulkConfiguration
+) -> tuple[pd.DataFrame, pd.Series, list[dict[str, Any]]]:
+    print(f"Starting run #{i}")
+    start_time = time()
+    output = train_transformer_fourier(
+        FourierTrainingConfiguration(
+            device=args.device,
+            lr=args.lr,
+            wd=args.wd,
+            dataset_size=args.dataset_size,
+            func_width=args.func_width,
+            head_dim=args.head_dim,
+            num_heads=args.num_heads,
+            num_epochs=args.num_epochs,
+            train_frac=args.train_frac,
+            random_seed=metadata["random_seed"],  # type: ignore
+            coeffs=metadata["coeffs"],  # type: ignore
+            comps=metadata["comps"],  # type: ignore
+        )
+    )
+    small_events_table = output.events_log
+    model_obj = output.params_dict
+    min_loss = small_events_table["loss"].min()
+    max_eval_acc = small_events_table["eval_acc"].max()
+    metadata["min_loss"] = min_loss
+    metadata["max_eval_acc"] = max_eval_acc
+    metadata["ds_fraction_positive"] = output.ds_positive_frac
+    small_events_table["uuid"] = run_uuid
+    print(f"Finishing run #{i}, elapsed: {(time() - start_time):.2f} s")
+    return small_events_table, metadata, model_obj
 
 
 if __name__ == "__main__":
@@ -109,47 +143,32 @@ if __name__ == "__main__":
 
     metadata_table = metadata_table.set_index("run_uuid")
 
-    for i in tqdm(range(len(metadata_table))):
-        metadata = metadata_table.iloc[i]
-        run_uuid: str = str(metadata_table.index[i])  # type: ignore
-        output = train_transformer_fourier(
-            FourierTrainingConfiguration(
-                device=args.device,
-                lr=args.lr,
-                wd=args.wd,
-                dataset_size=args.dataset_size,
-                func_width=args.func_width,
-                head_dim=args.head_dim,
-                num_heads=args.num_heads,
-                num_epochs=args.num_epochs,
-                train_frac=args.train_frac,
-                random_seed=metadata["random_seed"],  # type: ignore
-                coeffs=metadata["coeffs"],  # type: ignore
-                comps=metadata["comps"],  # type: ignore
-            )
+    with multiprocessing.Pool(args.num_procs) as p:
+        res = p.starmap(
+            process_ith_entry,
+            zip(
+                range(len(metadata_table)),
+                metadata_table.to_dict(orient="records"),
+                metadata_table.index,
+                repeat(args),
+            ),
         )
-        small_events_table = output.events_log
-        model_obj = output.params_dict
-        min_loss = small_events_table["loss"].min()
-        max_eval_acc = small_events_table["eval_acc"].max()
-        metadata_table.loc[run_uuid, "min_loss"] = min_loss
-        metadata_table.loc[run_uuid, "max_eval_acc"] = max_eval_acc
-        metadata_table.loc[run_uuid, "ds_fraction_positive"] = output.ds_positive_frac
-        small_events_table["uuid"] = run_uuid
 
-        small_events_table = small_events_table.reindex(
-            columns=events_table.columns, fill_value=None
-        )
-        if len(events_table) > 0:
-            events_table = pd.concat(
-                [events_table, small_events_table], ignore_index=True
-            )
-        else:
-            events_table = small_events_table
-        model_objs[run_uuid] = model_obj
-        if args.model_save_path is not None:
-            torch.save(model_objs, args.model_save_path)
-        if args.event_csv_save_path is not None:
-            events_table.to_csv(args.event_csv_save_path)
-        if args.metadata_csv_save_path is not None:
-            metadata_table.to_csv(args.metadata_csv_save_path)
+    small_event_tables, metadata_records, model_obj_list = zip(*res)  # type: ignore
+    small_event_tables = [
+        small_events_table.reindex(columns=events_table.columns, fill_value=None)
+        for small_events_table in small_event_tables
+    ]
+    events_table = pd.concat(small_event_tables, ignore_index=True)
+    for i, record in enumerate(metadata_records):
+        metadata_table.iloc[i] = record
+    model_objs = {
+        run_uuid: model_obj
+        for run_uuid, model_obj in zip(metadata_table.index, model_obj_list)
+    }
+    if args.model_save_path is not None:
+        torch.save(model_objs, args.model_save_path)
+    if args.event_csv_save_path is not None:
+        events_table.to_csv(args.event_csv_save_path)
+    if args.metadata_csv_save_path is not None:
+        metadata_table.to_csv(args.metadata_csv_save_path)
